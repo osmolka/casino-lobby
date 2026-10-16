@@ -1,0 +1,22 @@
+# dependencies and builds
+node_modules/
+dist/
+dev-dist/
+coverage/
+
+# test artifacts
+playwright-report/
+test-results/
+
+# IDE
+.idea/
+*.iml
+
+# env and local
+.env
+.env.*
+.claude/settings.local.json
+.DS_Store
+*.log
+/WORKFLOW.md
+/PLAN.md
