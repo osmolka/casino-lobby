@@ -15,18 +15,18 @@ export interface Filters {
 
 export const DEFAULT_FILTERS: Filters = { cat: null, prov: [], tag: null, q: '', sort: 'trending' };
 
+/** A game matches when every whitespace-separated token occurs in its title or provider name. */
 export function filterGames(games: readonly Game[], f: Filters): Game[] {
-  const needle = f.q.trim().toLowerCase();
+  const tokens = f.q.toLowerCase().split(/\s+/).filter(Boolean);
   const providers = f.prov.length > 0 ? new Set(f.prov) : null;
-  return games.filter(
-    (g) =>
-      (f.cat === null || g.category === f.cat) &&
-      (providers === null || providers.has(g.provider)) &&
-      (f.tag === null || g.tags.includes(f.tag)) &&
-      (needle === '' ||
-        g.title.toLowerCase().includes(needle) ||
-        g.providerName.toLowerCase().includes(needle)),
-  );
+  return games.filter((g) => {
+    if (f.cat !== null && g.category !== f.cat) return false;
+    if (providers !== null && !providers.has(g.provider)) return false;
+    if (f.tag !== null && !g.tags.includes(f.tag)) return false;
+    if (tokens.length === 0) return true;
+    const haystack = `${g.title} ${g.providerName}`.toLowerCase();
+    return tokens.every((token) => haystack.includes(token));
+  });
 }
 
 // Fixed locale: the order must not change with the UI language.

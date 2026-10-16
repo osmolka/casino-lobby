@@ -34,11 +34,15 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 - 2a — Hook `useCatalogFilters` also canonicalizes a non-canonical URL on mount (replaceState) and keeps non-filter params (`mock`) verbatim after the filter params.
 - 2a — `?mock=fail-catalog` → `CatalogError('network')` after the delay, so H2 offline fallback can be demoed with it. `slow` = +2500 ms.
 - 2a — "All" = `null` in `Filters`; `sort=trending` is the default and is not written.
+- 2a — Search: q split on whitespace, every token must be a substring of lowercase `title providerName` (in `filterGames`; URL keeps q as typed, trimmed). `toLowerCase`, no accent folding / ru matching: catalog data is English, H1 is UI only.
 
 ## Open issues
 <!-- One line each: what, where, how to reproduce -->
 - `npm audit`: 8 high, dev-only (braces via stylelint → globby/fast-glob), no fix upstream; `npm audit --omit=dev` = 0.
 - Dev server shows unstyled content briefly (Vite injects CSS via JS in dev); theme attr is already correct. Preview/prod has no flash.
+
+## For NOTES.md ("with a week")
+- Search: accent/diacritic folding (`normalize('NFD')`) and locale-aware matching.
 
 ## Bonus claim status
 <!-- H1–H5: claimed / not claimed + one-line reason. Filled during phases 6–7. -->

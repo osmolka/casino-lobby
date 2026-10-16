@@ -110,6 +110,41 @@ describe('filterGames', () => {
   });
 });
 
+describe('filterGames search tokens', () => {
+  const catalog = [
+    makeGame({ id: 'dead', title: 'Book of Dead', provider: 'playn-go', providerName: "Play'n GO" }),
+    makeGame({ id: 'star', title: 'Starburst', provider: 'netent', providerName: 'NetEnt' }),
+    makeGame({ id: 'gonzo', title: "Gonzo's Quest", provider: 'netent', providerName: 'NetEnt' }),
+  ];
+  const search = (q: string) => ids(filterGames(catalog, withFilters({ q })));
+
+  it('matches when every token is in the title ("book dead")', () => {
+    expect(search('book dead')).toEqual(['dead']);
+  });
+
+  it('matches tokens across title and provider ("starburst netent")', () => {
+    expect(search('starburst netent')).toEqual(['star']);
+  });
+
+  it('ignores word order', () => {
+    expect(search('dead book')).toEqual(['dead']);
+    expect(search('netent starburst')).toEqual(['star']);
+  });
+
+  it('ignores extra whitespace between and around tokens', () => {
+    expect(search('  book \t  dead  ')).toEqual(['dead']);
+  });
+
+  it('requires every token to match', () => {
+    expect(search('book netent')).toEqual([]);
+  });
+
+  it('matches everything for an empty or whitespace-only query', () => {
+    expect(search('')).toEqual(['dead', 'star', 'gonzo']);
+    expect(search(' \t ')).toEqual(['dead', 'star', 'gonzo']);
+  });
+});
+
 describe('sortGames', () => {
   it('sorts trending by popularity descending, ties by title', () => {
     expect(ids(sortGames(games, 'trending'))).toEqual(['a', 'e', 'c', 'd', 'b']);

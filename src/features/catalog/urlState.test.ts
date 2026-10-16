@@ -52,6 +52,11 @@ describe('parseFilters', () => {
     expect(parseFilters('?q=%20%20%20').q).toBe('');
   });
 
+  it('keeps q as typed apart from trimming (no tokenization)', () => {
+    expect(parseFilters('?q=%20book%20%20of%20%20dead%20').q).toBe('book  of  dead');
+    expect(serializeFilters(withFilters({ q: ' book  dead ' }))).toBe('q=book%20%20dead');
+  });
+
   it('caps q length', () => {
     expect(parseFilters(`?q=${'x'.repeat(MAX_QUERY_LENGTH + 50)}`).q).toHaveLength(MAX_QUERY_LENGTH);
   });
