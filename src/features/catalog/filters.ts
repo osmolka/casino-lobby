@@ -15,6 +15,11 @@ export interface Filters {
 
 export const DEFAULT_FILTERS: Filters = { cat: null, prov: [], tag: null, q: '', sort: 'trending' };
 
+/** Number of active filters, shown on the mobile disclosure button. Sort is not a filter. */
+export function activeFilterCount(f: Filters): number {
+  return (f.cat === null ? 0 : 1) + f.prov.length + (f.tag === null ? 0 : 1) + (f.q === '' ? 0 : 1);
+}
+
 /** A game matches when every whitespace-separated token occurs in its title or provider name. */
 export function filterGames(games: readonly Game[], f: Filters): Game[] {
   const tokens = f.q.toLowerCase().split(/\s+/).filter(Boolean);

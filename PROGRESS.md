@@ -8,7 +8,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 |---|---|---|---|
 | 1 | Scaffold, themes, i18n, layout, fixture | done | phase 1 |
 | 2a | Catalog data, filters, URL state (no UI) | done | phase 2a |
-| 2b | Catalog UI and states | todo | |
+| 2b | Catalog UI and states | done | phase 2b |
 | 3 | Wallet and deposit | todo | |
 | 4 | Live feed | todo | |
 | 5 | Promos, command palette (H3), polish | todo | |
@@ -34,11 +34,16 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 - 2a — Hook `useCatalogFilters` also canonicalizes a non-canonical URL on mount (replaceState) and keeps non-filter params (`mock`) verbatim after the filter params.
 - 2a — `?mock=fail-catalog` → `CatalogError('network')` after the delay, so H2 offline fallback can be demoed with it. `slow` = +2500 ms.
 - 2a — "All" = `null` in `Filters`; `sort=trending` is the default and is not written.
+- 2b — Card = `<a id="game-<id>" href="#game-<id>">` (no game page; card is its own `:target`, dashed outline). Hash-only popstate is a no-op in the hook (pending debounce kept). Push (discrete filter, reset) drops the hash; replaceState writes keep it.
+- 2b — Thumbnails: CSS gradient from CSS vars + id-free SVG shapes (no SVG ids). Bets in EUR (wallet currency) via `formatMoneyRange` from integer minor units (string decimals, no float division).
+- 2b — Sort is a native select in the always-visible toolbar; mobile "Filters (n)" counts cat + each provider + tag + q (not sort). Clear filters shows when filters ≠ defaults or the input is non-empty; focus → h1 after Clear/Retry.
+- 2b — Catalog.test uses `fireEvent`: RTL's user-event async wrapper waits on a `setTimeout` that vitest fake timers never fire.
 - 2a — Search: q split on whitespace, every token must be a substring of lowercase `title providerName` (in `filterGames`; URL keeps q as typed, trimmed). `toLowerCase`, no accent folding / ru matching: catalog data is English, H1 is UI only.
 
 ## Open issues
 <!-- One line each: what, where, how to reproduce -->
 - `npm audit`: 8 high, dev-only (braces via stylelint → globby/fast-glob), no fix upstream; `npm audit --omit=dev` = 0.
+- Preview: Chrome warns "inter-latin.woff2 was preloaded … but not used within a few seconds" on the 2nd+ navigation in the same tab (font served from memory cache). First load clean; pre-existing (reproduced on the phase 2a build). Not fixed in 2b — decide in phase 7 QA.
 - Dev server shows unstyled content briefly (Vite injects CSS via JS in dev); theme attr is already correct. Preview/prod has no flash.
 
 ## For NOTES.md ("with a week")
@@ -49,4 +54,4 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 
 ## Next
 <!-- What the next session should start with -->
-Phase 2b: UI on top of `useCatalogFilters` (call `sanitize(games)` after load) + `fetchCatalog({ signal })` (ignore AbortError). Error text via `CATALOG_ERROR_KEYS[kind]`; `catalog.error.*` keys exist, add the rest of the 2b UI keys.
+Phase 3: wallet + deposit. `shared/format.ts` has `formatMoney(minor, currency, locale)` / `minorToDecimal`; reuse for balance and conversion preview.

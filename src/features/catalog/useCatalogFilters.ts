@@ -21,12 +21,15 @@ export interface CatalogFilters {
   sanitize: (games: readonly Game[]) => void;
 }
 
-/** Writes `f` into the URL, keeping non-filter params (e.g. `mock`). No-op if the URL would not change. */
+/**
+ * Writes `f` into the URL, keeping non-filter params (e.g. `mock`). No-op if the URL would not change.
+ * A push is a new view, so it drops the hash (a `#game-<id>` card target); a replace keeps it.
+ */
 function writeUrl(f: Filters, mode: Mode): void {
   const { pathname, search, hash } = window.location;
   const next = buildSearch(search, f);
   if (next === search) return;
-  const url = `${pathname}${next}${hash}`;
+  const url = mode === 'push' ? `${pathname}${next}` : `${pathname}${next}${hash}`;
   if (mode === 'push') window.history.pushState(window.history.state, '', url);
   else window.history.replaceState(window.history.state, '', url);
 }
@@ -42,6 +45,8 @@ export function useCatalogFilters(): CatalogFilters {
   const queryRef = useRef(state.query);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const gamesRef = useRef<readonly Game[] | null>(null);
+  /** `location.search` after our last write or read; a popstate that leaves it unchanged is hash-only. */
+  const searchRef = useRef('');
 
   const cancelPending = useCallback(() => {
     clearTimeout(timerRef.current);
@@ -53,6 +58,7 @@ export function useCatalogFilters(): CatalogFilters {
     if (changed) {
       appliedRef.current = next;
       writeUrl(next, mode);
+      searchRef.current = window.location.search;
     }
     if (query !== undefined) queryRef.current = query;
     if (changed || query !== undefined) setState({ filters: appliedRef.current, query: queryRef.current });
@@ -98,12 +104,16 @@ export function useCatalogFilters(): CatalogFilters {
   useEffect(() => {
     // Canonicalize a hand-written or stale URL without adding a history entry.
     writeUrl(appliedRef.current, 'replace');
+    searchRef.current = window.location.search;
 
     const onPopState = () => {
+      // Hash-only navigation (card link, Back from it): filters did not change, keep typing state.
+      if (window.location.search === searchRef.current) return;
       cancelPending();
       const parsed = parseFilters(window.location.search);
       const next = gamesRef.current ? sanitizeFilters(parsed, gamesRef.current) : parsed;
       writeUrl(next, 'replace');
+      searchRef.current = window.location.search;
       appliedRef.current = next;
       queryRef.current = next.q;
       setState({ filters: next, query: next.q });

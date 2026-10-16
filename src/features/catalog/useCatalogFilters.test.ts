@@ -215,6 +215,59 @@ describe('useCatalogFilters', () => {
     expect(pushSpy).not.toHaveBeenCalled();
   });
 
+  describe('hash (#game-<id> card links)', () => {
+    it('ignores a hash-only popstate: the pending search still applies and the input is not resynced', () => {
+      const { result } = render('?cat=live');
+      act(() => {
+        result.current.setQuery('book');
+      });
+      act(() => {
+        popTo('?cat=live#game-x');
+      });
+      expect(result.current.query).toBe('book');
+      expect(result.current.filters.q).toBe('');
+
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+      expect(result.current.filters.q).toBe('book');
+      expect(window.location.search).toBe('?cat=live&q=book');
+      expect(window.location.hash).toBe('#game-x');
+    });
+
+    it('drops the hash on a discrete filter push', () => {
+      const { result } = render('?cat=live#game-x');
+      act(() => {
+        result.current.update({ sort: 'rtp' });
+      });
+      expect(search()).toBe('?cat=live&sort=rtp');
+      expect(window.location.hash).toBe('');
+      expect(pushSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('drops the hash on reset', () => {
+      const { result } = render('?cat=live#game-x');
+      act(() => {
+        result.current.reset();
+      });
+      expect(window.location.hash).toBe('');
+    });
+
+    it('keeps the hash on replaceState writes (mount canonicalization, debounced search)', () => {
+      const { result } = render('?sort=trending&cat=live#game-x');
+      expect(search()).toBe('?cat=live');
+      expect(window.location.hash).toBe('#game-x');
+      act(() => {
+        result.current.setQuery('book');
+      });
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+      expect(search()).toBe('?cat=live&q=book');
+      expect(window.location.hash).toBe('#game-x');
+    });
+  });
+
   it('reset clears all filters and the input in one push, keeping mock', () => {
     const { result } = render('?cat=live&q=book&mock=slow');
     act(() => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_FILTERS, filterGames, selectGames, sortGames, type Filters } from './filters';
+import { DEFAULT_FILTERS, activeFilterCount, filterGames, selectGames, sortGames, type Filters } from './filters';
 import { makeGame } from './testGames';
 
 const games = [
@@ -174,5 +174,18 @@ describe('selectGames', () => {
   it('filters then sorts', () => {
     const result = selectGames(games, withFilters({ tag: 'classic', sort: 'rtp' }));
     expect(ids(result)).toEqual(['c', 'd']);
+  });
+});
+
+describe('activeFilterCount', () => {
+  it('is 0 for the defaults', () => {
+    expect(activeFilterCount(DEFAULT_FILTERS)).toBe(0);
+  });
+
+  it('counts category, each provider, tag and search; sort is not a filter', () => {
+    expect(
+      activeFilterCount({ cat: 'slots', prov: ['a', 'b'], tag: 'jackpot', q: 'book', sort: 'rtp' }),
+    ).toBe(5);
+    expect(activeFilterCount({ ...DEFAULT_FILTERS, sort: 'new' })).toBe(0);
   });
 });

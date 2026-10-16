@@ -40,6 +40,14 @@ export function ChevronUpIcon(props: IconProps) {
   );
 }
 
+export function CheckIcon(props: IconProps) {
+  return (
+    <svg {...base} width={14} height={14} strokeWidth={3} {...props}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
 export function LogoMark(props: IconProps) {
   return (
     <svg {...base} width={28} height={28} viewBox="0 0 32 32" stroke="none" {...props}>
