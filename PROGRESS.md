@@ -30,6 +30,7 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 - 1 — Language switcher renders only when >1 locale exists; palette trigger not rendered until phase 5.
 - 1 — Fixture: `public/api/games.json` is a plain `Game[]`; seed 20261016, fixed reference date 2026-10-01 for `new` tag; one deliberately long title. A test asserts the committed JSON equals the generator output.
 - 1 — Mobile feed = collapsible bar sticky at the bottom (DOM order main → aside matches visual order).
+- fix — Removed the Inter font preload: correct markup (`as`/`type`/`crossorigin`, same URL as @font-face) still warned on repeat navigations because Chrome serves @font-face from its memory cache and leaves the preload unused. `font-display: swap` covers the first load.
 - 2a — Two-step URL parse: `parseFilters` checks format only (enums, slug regex, q trim/cap 100); `sanitize(games)` in the hook drops unknown prov/tag via replaceState once data loads (approved).
 - 2a — Hook `useCatalogFilters` also canonicalizes a non-canonical URL on mount (replaceState) and keeps non-filter params (`mock`) verbatim after the filter params.
 - 2a — `?mock=fail-catalog` → `CatalogError('network')` after the delay, so H2 offline fallback can be demoed with it. `slow` = +2500 ms.
@@ -43,7 +44,6 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 ## Open issues
 <!-- One line each: what, where, how to reproduce -->
 - `npm audit`: 8 high, dev-only (braces via stylelint → globby/fast-glob), no fix upstream; `npm audit --omit=dev` = 0.
-- Preview: Chrome warns "inter-latin.woff2 was preloaded … but not used within a few seconds" on the 2nd+ navigation in the same tab (font served from memory cache). First load clean; pre-existing (reproduced on the phase 2a build). Not fixed in 2b — decide in phase 7 QA.
 - Dev server shows unstyled content briefly (Vite injects CSS via JS in dev); theme attr is already correct. Preview/prod has no flash.
 
 ## For NOTES.md ("with a week")

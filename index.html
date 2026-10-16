@@ -27,7 +27,8 @@
       })();
     </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- No font preload: on repeat navigations Chrome serves @font-face from its memory cache and warns that
+         the preload was unused. font-display: swap covers the first load. -->
   </head>
   <body>
     <div id="root"></div>
