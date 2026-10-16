@@ -7,7 +7,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 | Phase | Scope | Status | Commit |
 |---|---|---|---|
 | 1 | Scaffold, themes, i18n, layout, fixture | done | phase 1 |
-| 2a | Catalog data, filters, URL state (no UI) | todo | |
+| 2a | Catalog data, filters, URL state (no UI) | done | phase 2a |
 | 2b | Catalog UI and states | todo | |
 | 3 | Wallet and deposit | todo | |
 | 4 | Live feed | todo | |
@@ -30,6 +30,10 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 - 1 — Language switcher renders only when >1 locale exists; palette trigger not rendered until phase 5.
 - 1 — Fixture: `public/api/games.json` is a plain `Game[]`; seed 20261016, fixed reference date 2026-10-01 for `new` tag; one deliberately long title. A test asserts the committed JSON equals the generator output.
 - 1 — Mobile feed = collapsible bar sticky at the bottom (DOM order main → aside matches visual order).
+- 2a — Two-step URL parse: `parseFilters` checks format only (enums, slug regex, q trim/cap 100); `sanitize(games)` in the hook drops unknown prov/tag via replaceState once data loads (approved).
+- 2a — Hook `useCatalogFilters` also canonicalizes a non-canonical URL on mount (replaceState) and keeps non-filter params (`mock`) verbatim after the filter params.
+- 2a — `?mock=fail-catalog` → `CatalogError('network')` after the delay, so H2 offline fallback can be demoed with it. `slow` = +2500 ms.
+- 2a — "All" = `null` in `Filters`; `sort=trending` is the default and is not written.
 
 ## Open issues
 <!-- One line each: what, where, how to reproduce -->
@@ -41,4 +45,4 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 
 ## Next
 <!-- What the next session should start with -->
-Phase 2a: catalog api/filters/urlState under `src/features/catalog/` (types already in `types.ts`). Add i18n keys to `src/i18n/en.ts`.
+Phase 2b: UI on top of `useCatalogFilters` (call `sanitize(games)` after load) + `fetchCatalog({ signal })` (ignore AbortError). Error text via `CATALOG_ERROR_KEYS[kind]`; `catalog.error.*` keys exist, add the rest of the 2b UI keys.

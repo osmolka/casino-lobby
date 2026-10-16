@@ -22,6 +22,11 @@ export const en = {
   catalog: {
     title: 'Games',
     loading: 'Loading games',
+    error: {
+      network: 'Could not reach the server. Check your connection and try again.',
+      http: 'The server could not load the games. Try again in a moment.',
+      invalid: 'The game list came back damaged. Try again.',
+    },
   },
   feed: {
     title: 'Live wins',
