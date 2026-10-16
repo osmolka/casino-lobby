@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Lucky Lobby</title>
+    <!-- Runs before any CSS: sets theme, lang and dir so there is no flash. Keys: src/app/theme.ts, src/i18n/locales.ts. -->
+    <script id="boot">
+      (function () {
+        var root = document.documentElement;
+        var theme = null;
+        var locale = null;
+        try {
+          theme = localStorage.getItem('lobby.theme');
+          locale = localStorage.getItem('lobby.locale');
+        } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        var locales = { en: 'ltr' };
+        if (!Object.prototype.hasOwnProperty.call(locales, locale)) locale = 'en';
+        root.setAttribute('data-theme', theme);
+        root.style.colorScheme = theme;
+        root.lang = locale;
+        root.dir = locales[locale];
+      })();
+    </script>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

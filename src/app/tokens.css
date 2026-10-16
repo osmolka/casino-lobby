@@ -1,0 +1,48 @@
+/* Every text/background pair is checked for WCAG AA in tokens.test.ts. */
+:root,
+:root[data-theme='light'] {
+  --bg: #f5f6fa;
+  --surface: #fff;
+  --fg: #151823;
+  --fg-muted: #535b6e;
+  --border: #858da0;
+  --accent: #6b2fd6;
+  --accent-fg: #fff;
+  --focus: #1f4fd1;
+  --danger: #b42318;
+  --success: #167a3c;
+  --skeleton: #e3e6ee;
+  --shadow: 0 1px 2px rgb(21 24 35 / 8%), 0 4px 12px rgb(21 24 35 / 6%);
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e1016;
+  --surface: #1a1d27;
+  --fg: #eef0f6;
+  --fg-muted: #a6adbe;
+  --border: #6c7487;
+  --accent: #b296ff;
+  --accent-fg: #14111f;
+  --focus: #ffc94d;
+  --danger: #ff8a80;
+  --success: #5fd38a;
+  --skeleton: #262a37;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 12px rgb(0 0 0 / 30%);
+}
+
+:root {
+  --dir: 1;
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --header-block-size: 4rem;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', roboto, 'Helvetica Neue', arial, sans-serif;
+}
+
+:root[dir='rtl'] {
+  --dir: -1;
+}

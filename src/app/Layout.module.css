@@ -1,0 +1,45 @@
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-block-size: calc(100dvb - var(--header-block-size));
+}
+
+.main {
+  min-inline-size: 0;
+  padding: var(--space-4);
+}
+
+.main:focus {
+  outline: none;
+}
+
+.heading {
+  margin-block-end: var(--space-4);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
+  gap: var(--space-4);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.thumb {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius);
+}
+
+@media (width >= 60rem) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    gap: var(--space-4);
+    padding-inline-end: var(--space-4);
+  }
+}
