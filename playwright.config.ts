@@ -20,7 +20,9 @@ export default defineConfig({
         webServer: {
           command: `npm run build && npx vite preview --port ${PREVIEW_PORT} --strictPort`,
           url: `http://localhost:${PREVIEW_PORT}`,
-          reuseExistingServer: !process.env.CI,
+          // Never test whatever already listens on the port (e.g. a stale `start:pwa` build): a busy port fails
+          // the run. To target a running server on purpose, set E2E_BASE_URL (then no webServer is started).
+          reuseExistingServer: false,
           timeout: 120_000,
         },
       }),

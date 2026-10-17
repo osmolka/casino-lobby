@@ -46,7 +46,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - 5b — Placement: `<Catalog promos={<Promos/>}>` slot right after the h1 (heading order h1 → h2 Promotions → h3 states); element made in Layout, so catalog re-renders reuse it. State local to Promos (isolation test: 0 grid commits).
 - 5b — Track: native `overflow-x` + `scroll-snap x mandatory`; padding + scroll-padding `--space-2` (ring room), negative inline margin; `min(82%, 20rem)` columns (next card peeks). Card and skeleton share `min-block-size: 10rem` (e2e: same height, no jump). Text `--fg` on `linear-gradient(135deg in srgb, …)`; tokens.test samples 101 points × 360 hues × 2 themes. Swipe e2e: CDP `Input.dispatchTouchEvent` (touch `synthesizeScrollGesture` does not scroll headless); **momentum is native and not tested**, manual check on a real device.
 - 5b — Polish: global button hover/press tint (`color-mix` of currentcolor 10/18 %, AA kept), `cursor: not-allowed` on `aria-disabled`. `cssPolish.test.ts`: no layout-property transitions, global reduced-motion rule, no spinners. E2E: 24×24 targets at 360px.
-- e2e — `npm run test:e2e` reuses any server on :4173 (`reuseExistingServer`); a running `start:pwa` serves a stale build. Stop it, or build elsewhere and use `E2E_BASE_URL`.
+- e2e — `reuseExistingServer: false`: a busy :4173 (e.g. a running `start:pwa`) fails the run with "http://localhost:4173 is already used" instead of testing a stale build. `E2E_BASE_URL` targets a running server on purpose. SW (phase 6): every test gets a fresh non-persistent context, so no SW survives from earlier tests or runs; within one test an SW from the first load can control later navigations.
 
 ## Open issues
 - `npm audit`: 8 high, dev-only (braces via stylelint → globby/fast-glob), no fix upstream; `npm audit --omit=dev` = 0.
@@ -58,6 +58,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - Rates are fixed (USD 0.92, GBP 1.17 → EUR). Limits 1–5000 per deposit in the chosen currency.
 - Confirmed transactions persist in `localStorage` (`wallet:v1`); pending/failed never. Corrupt data → fixture history.
 - Feed: wins are simulated client-side; auto-pause on mouse hover, keyboard focus on the list, hidden tab and offline; Pause button. Relative time refreshes every 30 s.
+- E2E: stop `npm run start:pwa` (or anything on :4173) before `npm run test:e2e`; a busy port fails the run.
 - Promotions: each card opens a catalog view (keeps the current sort). Swipe on touch with native momentum; on desktop scroll with trackpad, the scrollbar or Tab.
 - H3 runbook line: Ctrl+K (⌘K) → `frz vlt` → Enter → the "Frozen Vault XL" card is focused (pinned in `fuzzy.test.ts`; also `imm bj` → Immersive Blackjack). A game outside the current filters → its title becomes the search (Back restores).
 
