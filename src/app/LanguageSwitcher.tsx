@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { useI18n } from '../i18n/LocaleProvider';
 import { LOCALES, isLocaleCode } from '../i18n/locales';
+import { Select } from '../shared/Select';
 import styles from './Header.module.css';
 
 const codes = Object.keys(LOCALES).filter(isLocaleCode);
@@ -15,7 +16,7 @@ export function LanguageSwitcher() {
       <label htmlFor={id} className="visually-hidden">
         {t('language.label')}
       </label>
-      <select
+      <Select
         id={id}
         className={styles.select}
         value={locale.code}
@@ -28,7 +29,7 @@ export function LanguageSwitcher() {
             {t(`language.names.${code}`)}
           </option>
         ))}
-      </select>
+      </Select>
     </>
   );
 }

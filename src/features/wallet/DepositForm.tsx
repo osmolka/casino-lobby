@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { useI18n } from '../../i18n/LocaleProvider';
 import type { MessageKey } from '../../i18n/types';
 import { currencyName, formatEnteredAmount, formatMoney } from '../../shared/format';
+import { Select } from '../../shared/Select';
 import { CloseIcon } from '../../shared/icons';
 import { useOnline } from '../../shared/useOnline';
 import { MAX_DEPOSIT, MIN_DEPOSIT, parseAmount, type AmountError } from './amount';
@@ -137,7 +138,7 @@ export function DepositForm({ titleId, onConfirm, onClose }: Props) {
             <label htmlFor={currencyId} className={styles.label}>
               {t('wallet.dialog.currency')}
             </label>
-            <select
+            <Select
               id={currencyId}
               className={styles.input}
               value={currency}
@@ -153,7 +154,7 @@ export function DepositForm({ titleId, onConfirm, onClose }: Props) {
                   {t('wallet.dialog.currencyOption', { code: c, name: currencyName(c, code) })}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
 

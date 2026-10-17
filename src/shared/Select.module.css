@@ -1,0 +1,39 @@
+.wrap {
+  position: relative;
+  display: grid;
+  min-inline-size: 0;
+}
+
+/* Two classes: wins over the caller's padding shorthand, so text never runs under the chevron. */
+.wrap .select {
+  appearance: none;
+  padding-inline-end: calc(var(--control-pad-inline) + var(--chevron-size) + var(--chevron-gap));
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.wrap .select:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.wrap .select:hover:not(:disabled) {
+  background-color: var(--skeleton);
+}
+
+.chevron {
+  position: absolute;
+  inset-block-start: 50%;
+
+  /* Measured from the wrapper edge = the select's border-box edge: add its 1px border (as on the balance button). */
+  inset-inline-end: calc(var(--control-pad-inline) + 1px);
+  inline-size: var(--chevron-size);
+  block-size: var(--chevron-size);
+  color: var(--fg);
+  pointer-events: none;
+  translate: 0 -50%;
+}
+
+.wrap:has(:disabled) .chevron {
+  opacity: 0.45;
+}

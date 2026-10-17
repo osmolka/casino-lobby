@@ -43,6 +43,15 @@ describe.each(["[data-theme='light']", "[data-theme='dark']"])('tokens %s', (sel
   });
 });
 
+// Dropdown chevrons (balance button, every select) are drawn in --fg on the control's background,
+// including the hover background (--skeleton): a UI graphic, ≥ 3:1.
+describe.each(["[data-theme='light']", "[data-theme='dark']"])('dropdown chevron %s', (selector) => {
+  const t = tokens(selector);
+  it.each(['bg', 'surface', 'skeleton'])(`fg chevron on %s ≥ ${UI}:1`, (bg) => {
+    expect(contrastRatio(t.fg ?? '', t[bg] ?? '')).toBeGreaterThanOrEqual(UI);
+  });
+});
+
 /** Percentage tokens, e.g. `--avatar-lightness: 85%` → { 'avatar-lightness': 85 }. */
 function percents(selector: string): Record<string, number> {
   return Object.fromEntries([...block(selector).matchAll(/--([\w-]+):\s*([\d.]+)%\s*;/g)].map((m): [string, number] => [m[1] ?? '', Number(m[2])]));

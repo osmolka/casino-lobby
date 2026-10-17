@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 import { useI18n } from '../../i18n/LocaleProvider';
 import { CheckIcon, ChevronUpIcon } from '../../shared/icons';
+import { Select } from '../../shared/Select';
 import { Skeleton } from '../../shared/Skeleton';
 import { CATEGORIES, SORTS, activeFilterCount, type Filters, type Sort } from './filters';
 import { labelFor, type ProviderOption } from './labels';
@@ -80,7 +81,7 @@ export function FilterPanel({ filters, query, setQuery, update, providers, tags 
           <label htmlFor={sortId} className={styles.sortLabel}>
             {t('catalog.sort.label')}
           </label>
-          <select
+          <Select
             id={sortId}
             className={styles.select}
             value={filters.sort}
@@ -94,7 +95,7 @@ export function FilterPanel({ filters, query, setQuery, update, providers, tags 
                 {t(`catalog.sort.${sort}`)}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <button
           type="button"

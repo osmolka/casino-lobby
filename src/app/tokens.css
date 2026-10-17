@@ -57,6 +57,11 @@
   --space-6: 1.5rem;
   --header-block-size: 4rem;
   --promo-hue-shift: 40;
+
+  /* Dropdown triggers (balance button, every select): same chevron, same inline-end spacing. */
+  --control-pad-inline: var(--space-2);
+  --chevron-size: 1rem;
+  --chevron-gap: var(--space-1);
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', roboto, 'Helvetica Neue', arial, sans-serif;
 }
 

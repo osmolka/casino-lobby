@@ -68,4 +68,9 @@ describe('CSS polish', () => {
   it('no scrollLeft in src (negative in RTL; scroll with scrollIntoView instead)', () => {
     expect(files(/\.tsx?$/).filter(({ text }) => /scrollLeft/.test(text)).map((f) => f.name)).toEqual([]);
   });
+
+  it('every <select> goes through shared/Select (appearance: none + our chevron)', () => {
+    const bare = files(/\.tsx$/).filter(({ name, text }) => !name.endsWith('Select.tsx') && /<select[\s>]/.test(text));
+    expect(bare.map((f) => f.name)).toEqual([]);
+  });
 });

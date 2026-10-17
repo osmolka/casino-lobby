@@ -51,9 +51,9 @@
 .balance {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--chevron-gap);
   min-block-size: 2.5rem;
-  padding-inline: var(--space-3) var(--space-2);
+  padding-inline: var(--space-3) var(--control-pad-inline);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: transparent;
@@ -67,6 +67,9 @@
 }
 
 .chevron {
+  flex: none;
+  inline-size: var(--chevron-size);
+  block-size: var(--chevron-size);
   transition: transform 150ms ease;
 }
 
