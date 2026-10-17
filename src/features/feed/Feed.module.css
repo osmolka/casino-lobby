@@ -1,0 +1,104 @@
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.pause {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.hint {
+  color: var(--fg-muted);
+  font-size: 0.875rem;
+}
+
+/* Scroll container and hover/focus pause region; focusable, so keep the ring inside the panel. */
+.list {
+  display: grid;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: var(--space-2);
+  min-block-size: 0;
+  margin: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  list-style: none;
+  border-radius: var(--radius-sm);
+}
+
+.list:focus-visible {
+  outline-offset: -3px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.row[data-fresh] {
+  animation: feed-in 0.3s ease-out;
+}
+
+@keyframes feed-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row[data-fresh] {
+    animation: none;
+  }
+}
+
+/* Contrast of --fg on this background is checked for every hue in tokens.test.ts. */
+.avatar {
+  display: grid;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: 50%;
+  background: hsl(var(--hue) var(--avatar-saturation) var(--avatar-lightness));
+  color: var(--fg);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.rowText {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.line,
+.meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line {
+  font-size: 0.875rem;
+}
+
+.amount {
+  font-weight: 700;
+}
+
+.meta {
+  color: var(--fg-muted);
+  font-size: 0.75rem;
+}

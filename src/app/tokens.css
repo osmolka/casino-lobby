@@ -14,6 +14,10 @@
   --skeleton: #e3e6ee;
   --shadow: 0 1px 2px rgb(21 24 35 / 8%), 0 4px 12px rgb(21 24 35 / 6%);
   --backdrop: rgb(21 24 35 / 55%);
+
+  /* Feed avatars: hsl(<hue> s l) behind --fg initials, AA for every hue (tokens.test.ts). */
+  --avatar-saturation: 70%;
+  --avatar-lightness: 82%;
 }
 
 :root[data-theme='dark'] {
@@ -30,6 +34,8 @@
   --skeleton: #262a37;
   --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 12px rgb(0 0 0 / 30%);
   --backdrop: rgb(0 0 0 / 70%);
+  --avatar-saturation: 50%;
+  --avatar-lightness: 28%;
 }
 
 :root {

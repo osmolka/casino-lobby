@@ -18,6 +18,22 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByRole('button', { name: /^Balance:/ })).toBeVisible();
     });
 
+    test('feed panel filled (desktop: always expanded)', async ({ page }) => {
+      await expect(page.getByRole('list', { name: 'Recent wins' }).getByRole('listitem')).not.toHaveCount(0);
+      expect(await axe(page)).toEqual([]);
+    });
+
+    test('feed panel filled, mobile: collapsed and expanded', async ({ page }) => {
+      await page.setViewportSize({ width: 360, height: 740 });
+      const toggle = page.getByRole('button', { name: 'Show live wins' });
+      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      expect(await axe(page), 'collapsed').toEqual([]);
+
+      await toggle.click();
+      await expect(page.getByRole('list', { name: 'Recent wins' }).getByRole('listitem')).not.toHaveCount(0);
+      expect(await axe(page), 'expanded').toEqual([]);
+    });
+
     test('lobby with the wallet panel expanded', async ({ page }) => {
       await page.getByRole('button', { name: /^Balance:/ }).click();
       await expect(page.getByRole('region', { name: 'Wallet' })).toBeVisible();

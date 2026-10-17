@@ -10,7 +10,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 | 2a | Catalog data, filters, URL state (no UI) | done | phase 2a |
 | 2b | Catalog UI and states | done | phase 2b |
 | 3 | Wallet and deposit | done | phase 3 |
-| 4 | Live feed | todo | |
+| 4 | Live feed | done | phase 4 |
 | 5 | Promos, command palette (H3), polish | todo | |
 | 6a | H4 accent, H1 Russian | todo | |
 | 6b | H2 PWA | todo | |
@@ -47,6 +47,13 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 - 3 — Wallet UI in the header: balance toggle → history panel (6 most recent), Deposit button (icon-only < 30rem). Failure after the dialog was closed → `role="alert"` notice in the widget. `i18n.rich()` interpolates nodes (amounts in `<bdi>`).
 - 3 — `@axe-core/playwright` 4.14.0 exact (§2 list). `tests/e2e/a11y.spec.ts` new (did not exist). E2E dwell is opt-in (`lobby.dwell()`), used only by the console-cleanliness tests (split in 4 parallel runs); fixture is `auto`, so every test checks the console. Suite: 31 tests, 29.5 s incl. build.
 - 2a — Search: q split on whitespace, every token must be a substring of lowercase `title providerName` (in `filterGames`; URL keeps q as typed, trimmed). `toLowerCase`, no accent folding / ru matching: catalog data is English, H1 is UI only.
+- 4 — Feed store (`features/feed/feedStore.ts`) on useSyncExternalStore: one timeout at most, only while subscribed and the pause set is empty; resume starts a fresh 1.2–3 s delay (no catch-up). 8 back-dated seed wins on connect, so the empty state appears only for `?mock=empty-feed`. Wins in EUR cents, log scale with squared exponent (median ≈ €28).
+- 4 — `shared/browserSignals.ts`: one shared DOM listener per signal (`subscribeVisibility`, `subscribeOnline`) used by the store and `useOnline`. `useAnimatedNumber` has no hidden-tab listener (it relies on rAF stopping), so nothing to share there.
+- 4 — Hover/focus pause on the wins `<ol>` only (tabIndex 0 + aria-label, scroll container), pointerType `mouse` only; Pause/Resume button outside it, label changes, no aria-pressed. jsx-a11y `no-noninteractive-tabindex` / `-element-interactions` disabled for that element with a reason.
+- 4 — Game titles: `loadGames()` extracted from `fetchCatalog` (fetch + validate + catalog:v1 write, no delay/mocks); `connectFeed` = own delay + `fail-feed`/`empty-feed` + `loadGames`. Two requests to `api/games.json` (no in-flight dedup). **H2 needs:** `api/games.json` available offline (SW cache) or a feed fallback to `catalog:v1`; while offline the store already pauses (`offline` reason) and generation itself needs no network.
+- 4 — Isolation test renders the real `<App/>` (StrictMode); `GameGrid` is mocked as a non-memo `<Profiler>` wrapper around the real grid, so any Catalog re-render counts. Mutation check (feed state lifted into Layout) → 10 commits, test fails; reverted.
+- 4 — Avatar: `hsl(hue var(--avatar-saturation) var(--avatar-lightness))` behind `--fg` initials; tokens.test checks all 360 hues (min 8.8:1 light, 4.9:1 dark).
+- 4 — E2E feed spec uses `page.clock` (install at fixed T0, `pauseAt(T0 + 10 s)`, `runFor`); hidden tab emulated by overriding `document.hidden`. Suite: 44 tests, 30.6 s incl. build.
 - fix — Cards: no `aria-labelledby` / `aria-describedby`; name = visible content (WCAG 2.5.3), no description (it repeated the name). axe clean without filters.
 
 ## Open issues
@@ -60,13 +67,16 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 - Rates are fixed (USD 0.92, GBP 1.17 → EUR). Limits 1–5000 per deposit in the chosen currency.
 - Confirmed transactions persist in `localStorage` (`wallet:v1`); pending/failed never. Corrupt data → fixture history.
 
+- Feed: wins are simulated client-side; auto-pause on mouse hover, keyboard focus on the list, hidden tab and offline; Pause button. Relative time refreshes every 30 s.
+
 ## For NOTES.md ("with a week")
 - Card a11y: restructure as heading link (title) + separate details, so the accessible name is shorter.
 - Search: accent/diacritic folding (`normalize('NFD')`) and locale-aware matching.
+- Feed: dedupe the concurrent `api/games.json` requests (shared in-flight promise with per-caller abort).
 
 ## Bonus claim status
 <!-- H1–H5: claimed / not claimed + one-line reason. Filled during phases 6–7. -->
 
 ## Next
 <!-- What the next session should start with -->
-Phase 4: live feed. Reuse `useReducedMotion`, `useAnimatedNumber`, `?mock=fail-feed|empty-feed`; pause control (WCAG 2.2.2).
+Phase 5: promos, command palette (H3), polish. For dialogs/palette tests see the user-event + fake timers note (2b).

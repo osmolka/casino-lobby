@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currencyName, formatDateTime, formatEnteredAmount, formatMoney, formatMoneyRange, formatPercent, minorToDecimal } from './format';
+import { currencyName, formatDateTime, formatEnteredAmount, formatMoney, formatMoneyRange, formatPercent, formatRelativeTime, minorToDecimal } from './format';
 
 describe('minorToDecimal', () => {
   it('converts integer minor units to an exact decimal string', () => {
@@ -69,5 +69,25 @@ describe('formatDateTime', () => {
 describe('currencyName', () => {
   it('uses Intl.DisplayNames', () => {
     expect(currencyName('USD', 'en')).toBe('US Dollar');
+  });
+});
+
+describe('formatRelativeTime', () => {
+  const now = Date.parse('2026-10-17T12:00:00.000Z');
+
+  it('returns null under a minute (and for future times) so the caller shows "just now"', () => {
+    expect(formatRelativeTime(now, now, 'en')).toBeNull();
+    expect(formatRelativeTime(now - 59_999, now, 'en')).toBeNull();
+    expect(formatRelativeTime(now + 5_000, now, 'en')).toBeNull();
+  });
+
+  it('uses whole minutes under an hour', () => {
+    expect(formatRelativeTime(now - 60_000, now, 'en')).toBe('1 minute ago');
+    expect(formatRelativeTime(now - 59 * 60_000 - 59_000, now, 'en')).toBe('59 minutes ago');
+  });
+
+  it('uses whole hours from an hour on', () => {
+    expect(formatRelativeTime(now - 60 * 60_000, now, 'en')).toBe('1 hour ago');
+    expect(formatRelativeTime(now - 26 * 60 * 60_000, now, 'en')).toBe('26 hours ago');
   });
 });

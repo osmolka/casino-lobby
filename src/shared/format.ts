@@ -79,3 +79,21 @@ export function currencyName(code: string, locale: string): string {
   }
   return names.of(code) ?? code;
 }
+
+const relativeFormats = new Map<string, Intl.RelativeTimeFormat>();
+const MINUTE_MS = 60_000;
+const HOUR_MS = 60 * MINUTE_MS;
+
+/** '5 minutes ago' / '2 hours ago' in whole units; null under a minute (and for future times): show "just now". */
+export function formatRelativeTime(at: number, now: number, locale: string): string | null {
+  const elapsed = now - at;
+  if (elapsed < MINUTE_MS) return null;
+  let rtf = relativeFormats.get(locale);
+  if (!rtf) {
+    rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'always' });
+    relativeFormats.set(locale, rtf);
+  }
+  return elapsed < HOUR_MS
+    ? rtf.format(-Math.floor(elapsed / MINUTE_MS), 'minute')
+    : rtf.format(-Math.floor(elapsed / HOUR_MS), 'hour');
+}

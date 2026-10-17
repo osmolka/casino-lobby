@@ -72,6 +72,24 @@ export function CheckIcon(props: IconProps) {
   );
 }
 
+/** Media control: not mirrored under RTL (by convention). */
+export function PauseIcon(props: IconProps) {
+  return (
+    <svg {...base} width={16} height={16} {...props}>
+      <path d="M8 5v14M16 5v14" />
+    </svg>
+  );
+}
+
+/** Media control: not mirrored under RTL (by convention). */
+export function PlayIcon(props: IconProps) {
+  return (
+    <svg {...base} width={16} height={16} {...props}>
+      <path d="M7 4.5v15l12-7.5z" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function LogoMark(props: IconProps) {
   return (
     <svg {...base} width={28} height={28} viewBox="0 0 32 32" stroke="none" {...props}>

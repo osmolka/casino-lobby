@@ -66,17 +66,11 @@ function isGame(value: unknown): value is Game {
 }
 
 /**
- * Loads the catalog. Rejects with CatalogError, or with the signal's AbortError when aborted
- * (callers should ignore that one).
+ * Fetches and validates `api/games.json`, and caches it in catalog:v1. No artificial delay, no mock flags:
+ * shared by the catalog and the live feed (game titles). Rejects with CatalogError, or with the signal's
+ * AbortError when aborted.
  */
-export async function fetchCatalog(options: FetchCatalogOptions = {}): Promise<Game[]> {
-  const { signal, search = window.location.search, random = Math.random } = options;
-  const mock = getMockFlags(search);
-
-  const ms = MIN_DELAY_MS + Math.floor(random() * (MAX_DELAY_MS - MIN_DELAY_MS + 1));
-  await delay(mock.has('slow') ? ms + SLOW_EXTRA_MS : ms, signal);
-  if (mock.has('fail-catalog')) throw new CatalogError('network');
-
+export async function loadGames(signal?: AbortSignal): Promise<Game[]> {
   let response: Response;
   try {
     response = await fetch(CATALOG_URL, signal ? { signal } : {});
@@ -98,4 +92,18 @@ export async function fetchCatalog(options: FetchCatalogOptions = {}): Promise<G
   // storageSet swallows quota/privacy errors, so a failed write never fails the fetch.
   storageSet(CATALOG_CACHE_KEY, JSON.stringify({ fetchedAt: Date.now(), games: body }));
   return body;
+}
+
+/**
+ * Loads the catalog after the artificial delay (`?mock=slow|fail-catalog`). Rejects with CatalogError, or
+ * with the signal's AbortError when aborted (callers should ignore that one).
+ */
+export async function fetchCatalog(options: FetchCatalogOptions = {}): Promise<Game[]> {
+  const { signal, search = window.location.search, random = Math.random } = options;
+  const mock = getMockFlags(search);
+
+  const ms = MIN_DELAY_MS + Math.floor(random() * (MAX_DELAY_MS - MIN_DELAY_MS + 1));
+  await delay(mock.has('slow') ? ms + SLOW_EXTRA_MS : ms, signal);
+  if (mock.has('fail-catalog')) throw new CatalogError('network');
+  return loadGames(signal);
 }

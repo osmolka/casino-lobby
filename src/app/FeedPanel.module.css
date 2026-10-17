@@ -41,13 +41,23 @@
   transform: rotate(180deg);
 }
 
+.title:focus-visible {
+  outline-offset: 4px;
+}
+
+/* Flex column: the controls stay put, the wins list (or a state) takes the rest and scrolls itself. */
 .body {
-  display: grid;
-  gap: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   max-block-size: 50dvb;
   padding-block: 0 var(--space-4);
   padding-inline: var(--space-4);
-  overflow-y: auto;
+}
+
+.skeleton {
+  display: grid;
+  gap: var(--space-2);
 }
 
 .body[data-open='false'] {
@@ -67,6 +77,35 @@
   min-inline-size: 0;
 }
 
+.state {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.stateTitle {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.state p {
+  color: var(--fg-muted);
+  font-size: 0.875rem;
+}
+
+.action {
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 600;
+}
+
 @media (width >= 60rem) {
   .panel {
     inset-block: calc(var(--header-block-size) + var(--space-4)) auto;
@@ -82,7 +121,7 @@
 
   .body,
   .body[data-open='false'] {
-    display: grid;
+    display: flex;
     max-block-size: calc(100dvb - var(--header-block-size) - 6rem);
   }
 }

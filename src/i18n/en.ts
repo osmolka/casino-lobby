@@ -129,6 +129,23 @@ export const en = {
     show: 'Show live wins',
     hide: 'Hide live wins',
     loading: 'Loading live wins',
+    list: 'Recent wins',
+    win: '{player} won {amount}',
+    meta: '{game} · {time}',
+    justNow: 'just now',
+    pause: 'Pause live feed',
+    resume: 'Resume live feed',
+    pausedReading: 'Paused while you read',
+    pausedOffline: 'Paused while offline',
+    retry: 'Try again',
+    error: {
+      title: 'Live wins did not load',
+      body: 'Could not connect to the live feed. Check your connection and try again.',
+    },
+    empty: {
+      title: 'No wins yet',
+      body: 'Nobody has won in the last few minutes. Try again to reconnect.',
+    },
   },
 };
 
