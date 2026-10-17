@@ -161,6 +161,8 @@ export const en = {
   promos: {
     title: 'Promotions',
     list: 'Current promotions',
+    previous: 'Previous promotions',
+    next: 'Next promotions',
     loading: 'Loading promotions',
     retry: 'Try again',
     error: {

@@ -34,6 +34,15 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(await axe(page), 'expanded').toEqual([]);
     });
 
+    test('promo Prev/Next: at the start and after Next', async ({ page }) => {
+      const promos = page.getByRole('region', { name: 'Promotions' });
+      await expect(promos.getByRole('button', { name: 'Previous promotions' })).toHaveAttribute('aria-disabled', 'true');
+      expect(await axe(page), 'start').toEqual([]);
+      await promos.getByRole('button', { name: 'Next promotions' }).click();
+      await expect(promos.getByRole('button', { name: 'Previous promotions' })).not.toHaveAttribute('aria-disabled');
+      expect(await axe(page), 'after Next').toEqual([]);
+    });
+
     test('lobby with the wallet panel expanded', async ({ page }) => {
       await page.getByRole('button', { name: /^Balance:/ }).click();
       await expect(page.getByRole('region', { name: 'Wallet' })).toBeVisible();

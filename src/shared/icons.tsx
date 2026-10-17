@@ -116,3 +116,21 @@ export function ArrowForwardIcon(props: IconProps) {
     </svg>
   );
 }
+
+/** Points to inline-start in LTR; mirror it under [dir='rtl']. */
+export function ChevronBackIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
+
+/** Points to inline-end in LTR; mirror it under [dir='rtl']. */
+export function ChevronForwardIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}

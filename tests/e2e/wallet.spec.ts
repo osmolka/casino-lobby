@@ -129,6 +129,8 @@ test('Esc while a failing deposit is in flight: dialog closes, failure is announ
 
 test('offline: deposit blocked with a message', async ({ page, context }) => {
   await open(page);
+  // Every region has loaded: a request still in flight (e.g. promos) would fail once offline.
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
   await openDeposit(page, '100');
   await context.setOffline(true);
   await expect(dialog(page).getByRole('status')).toHaveText('You are offline. Deposits are paused until the connection is back.');

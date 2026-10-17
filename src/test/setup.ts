@@ -1,5 +1,6 @@
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { installObserverStubs } from './observers';
 
 // jsdom exposes window.matchMedia as undefined.
 if (typeof window.matchMedia !== 'function') {
@@ -43,6 +44,8 @@ if (typeof Element.prototype.scrollIntoView !== 'function') {
     // no layout in jsdom
   };
 }
+
+installObserverStubs();
 
 afterEach(() => {
   cleanup();

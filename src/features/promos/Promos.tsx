@@ -1,10 +1,12 @@
 import { memo, useCallback, useId, useRef, type CSSProperties, type MouseEvent } from 'react';
 import { useI18n } from '../../i18n/LocaleProvider';
-import { ArrowForwardIcon } from '../../shared/icons';
+import { ArrowForwardIcon, ChevronBackIcon, ChevronForwardIcon } from '../../shared/icons';
 import { Skeleton } from '../../shared/Skeleton';
 import type { Filters } from '../catalog/filters';
 import { useCatalogContext } from '../catalog/CatalogProvider';
 import { promoTarget, type Promo } from './promos';
+import type { ScrollDirection } from './scroller';
+import { usePromoScroller } from './usePromoScroller';
 import { usePromos } from './usePromos';
 import styles from './Promos.module.css';
 
@@ -71,7 +73,20 @@ export function Promos() {
   const { showPromo } = useCatalogContext();
   const promos = usePromos();
   const headingId = useId();
+  const listId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const { setTrack, controls: scrollable, atStart, atEnd, scroll } = usePromoScroller();
+  const ready = promos.status === 'ready' && promos.promos.length > 0;
+  const controls = ready && scrollable;
+
+  // aria-disabled, not disabled: a disabled button would drop focus to body at the edge.
+  const onScroll = useCallback(
+    (direction: ScrollDirection) => {
+      if (direction === 'prev' ? atStart : atEnd) return;
+      scroll(direction);
+    },
+    [atStart, atEnd, scroll],
+  );
 
   // The Retry button disappears with the state; keep focus on a stable element.
   const { retry } = promos;
@@ -82,9 +97,39 @@ export function Promos() {
 
   return (
     <section className={styles.promos} aria-labelledby={headingId}>
-      <h2 id={headingId} ref={headingRef} tabIndex={-1} className={styles.heading}>
-        {t('promos.title')}
-      </h2>
+      <div className={styles.header}>
+        <h2 id={headingId} ref={headingRef} tabIndex={-1} className={styles.heading}>
+          {t('promos.title')}
+        </h2>
+        {controls && (
+          <div className={styles.controls}>
+            <button
+              type="button"
+              className={styles.control}
+              aria-label={t('promos.previous')}
+              aria-controls={listId}
+              aria-disabled={atStart || undefined}
+              onClick={() => {
+                onScroll('prev');
+              }}
+            >
+              <ChevronBackIcon className={styles.chevron} />
+            </button>
+            <button
+              type="button"
+              className={styles.control}
+              aria-label={t('promos.next')}
+              aria-controls={listId}
+              aria-disabled={atEnd || undefined}
+              onClick={() => {
+                onScroll('next');
+              }}
+            >
+              <ChevronForwardIcon className={styles.chevron} />
+            </button>
+          </div>
+        )}
+      </div>
 
       {promos.status === 'loading' && <PromosSkeleton />}
 
@@ -112,10 +157,16 @@ export function Promos() {
         </div>
       )}
 
-      {promos.status === 'ready' && promos.promos.length > 0 && (
+      {ready && (
         // Explicit role: list-style: none drops list semantics in Safari.
         // eslint-disable-next-line jsx-a11y/no-redundant-roles
-        <ul className={styles.track} role="list" aria-label={t('promos.list')}>
+        <ul
+          ref={setTrack}
+          id={listId}
+          className={controls ? `${styles.track} ${styles.withControls}` : styles.track}
+          role="list"
+          aria-label={t('promos.list')}
+        >
           {promos.promos.map((promo) => (
             <li key={promo.id} className={styles.item}>
               <PromoCard promo={promo} onOpen={showPromo} />

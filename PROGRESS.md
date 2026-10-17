@@ -46,6 +46,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - 5b — Placement: `<Catalog promos={<Promos/>}>` slot right after the h1 (heading order h1 → h2 Promotions → h3 states); element made in Layout, so catalog re-renders reuse it. State local to Promos (isolation test: 0 grid commits).
 - 5b — Track: native `overflow-x` + `scroll-snap x mandatory`; padding + scroll-padding `--space-2` (ring room), negative inline margin; `min(82%, 20rem)` columns (next card peeks). Card and skeleton share `min-block-size: 10rem` (e2e: same height, no jump). Text `--fg` on `linear-gradient(135deg in srgb, …)`; tokens.test samples 101 points × 360 hues × 2 themes. Swipe e2e: CDP `Input.dispatchTouchEvent` (touch `synthesizeScrollGesture` does not scroll headless); **momentum is native and not tested**, manual check on a real device.
 - 5b — Polish: global button hover/press tint (`color-mix` of currentcolor 10/18 %, AA kept), `cursor: not-allowed` on `aria-disabled`. `cssPolish.test.ts`: no layout-property transitions, global reduced-motion rule, no spinners. E2E: 24×24 targets at 360px.
+- tweak — Promo Prev/Next (`usePromoScroller`): rendered only when the track overflows (ResizeObserver) **and** `(hover: hover) and (pointer: fine)`, so touch keeps swipe only (user asked: absent on touch). IntersectionObserver (root = track, ≥ 0.98) tracks fully visible cards; `scrollTarget` picks next/prev; `scrollIntoView({inline: 'start', block: 'nearest'})`, smooth unless reduced motion; no scroll offsets read (test guards `scrollLeft` in src). Edges = `aria-disabled` + no-op. Native scrollbar `none` while the buttons show, else thin, `scrollbar-color: var(--border) transparent`. Observer stubs in `test/observers.ts` (installed by setup.ts).
 - e2e — `reuseExistingServer: false`: a busy :4173 (e.g. a running `start:pwa`) fails the run with "http://localhost:4173 is already used" instead of testing a stale build. `E2E_BASE_URL` targets a running server on purpose. SW (phase 6): every test gets a fresh non-persistent context, so no SW survives from earlier tests or runs; within one test an SW from the first load can control later navigations.
 
 ## Open issues
@@ -69,7 +70,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - Feed: the two jsx-a11y disables on the wins list are deliberate (focusable scrollable region with pointer/focus handlers that only pause).
 - Header at 320px: `scrollbar-gutter: stable` (dialog scroll lock) reserves 15px with a classic scrollbar → 273px for 286px of logo + controls → theme toggle wraps. Overlay scrollbars (mobile emulation) → 288px, one row. Fix = ≥13px (padding + gap at < 22rem), not a one-liner.
 
-- Polish leftovers (5b, timeboxed): provider checkbox rows and native selects have no hover style; game cards have no `:active`; focused headings (tabIndex −1) show the ring after keyboard use; promos have no arrow buttons for mice without horizontal scroll.
+- Polish leftovers (5b, timeboxed): provider checkbox rows and native selects have no hover style; game cards have no `:active`; focused headings (tabIndex −1) show the ring after keyboard use.
 
 ## Bonus claim status (H1–H5: claimed / not claimed + one-line reason; filled in phases 6–7)
 

@@ -64,4 +64,8 @@ describe('CSS polish', () => {
       .map((f) => f.name);
     expect([...keyframes, ...named]).toEqual([]);
   });
+
+  it('no scrollLeft in src (negative in RTL; scroll with scrollIntoView instead)', () => {
+    expect(files(/\.tsx?$/).filter(({ text }) => /scrollLeft/.test(text)).map((f) => f.name)).toEqual([]);
+  });
 });

@@ -4,6 +4,8 @@ import { expect, test } from './fixtures';
 const region = (page: Page) => page.getByRole('region', { name: 'Promotions' });
 const list = (page: Page) => page.getByRole('list', { name: 'Current promotions' });
 const gamesHeading = (page: Page) => page.getByRole('heading', { level: 1, name: 'Games' });
+const prevButton = (page: Page) => region(page).getByRole('button', { name: 'Previous promotions' });
+const nextButton = (page: Page) => region(page).getByRole('button', { name: 'Next promotions' });
 
 /** Resolves once scrollLeft has not changed for 10 animation frames (momentum and snapping are over). */
 function settledScroll(track: Locator) {
@@ -64,6 +66,8 @@ test.describe('touch, 360px', () => {
     const track = list(page);
     const before = await geometry(track);
     expect(before.scrollLeft).toBe(0);
+    await expect(nextButton(page), 'no Prev/Next on a touch pointer').toHaveCount(0);
+    await expect(prevButton(page)).toHaveCount(0);
     expect(before.secondVisible, 'the next card peeks').toBe(true);
     expect(before.pageOverflow, 'no page horizontal scroll').toBeLessThanOrEqual(0);
 
@@ -176,4 +180,70 @@ test('360px: every visible button, chip and form control is at least 24×24 CSS 
   });
   expect(checked).toBeGreaterThan(20); // header, filters (expanded), sort, chips, checkboxes, feed bar
   expect(small).toEqual([]);
+});
+
+for (const width of [1440, 1024]) {
+  test(`${width}px: Next scrolls and rests snapped, Prev returns to the start; native scrollbar hidden`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await loaded(page);
+    const track = list(page);
+    await expect(prevButton(page)).toHaveAttribute('aria-disabled', 'true');
+    await expect(nextButton(page)).not.toHaveAttribute('aria-disabled');
+    expect(await track.evaluate((el) => getComputedStyle(el).scrollbarWidth)).toBe('none');
+
+    await nextButton(page).click();
+    expect(await settledScroll(track)).toBeGreaterThan(0);
+    const after = await geometry(track);
+    const snapped = Math.min(...after.snapOffsets) <= 2 || after.maxScroll - after.scrollLeft <= 2;
+    expect(snapped, `snap offsets ${after.snapOffsets.join(', ')}`).toBe(true);
+    await expect(prevButton(page)).not.toHaveAttribute('aria-disabled');
+
+    for (let i = 0; i < 5 && (await prevButton(page).getAttribute('aria-disabled')) !== 'true'; i++) {
+      await prevButton(page).click();
+      await settledScroll(track);
+    }
+    await expect(prevButton(page)).toHaveAttribute('aria-disabled', 'true');
+    expect(await settledScroll(track)).toBe(0);
+  });
+}
+
+test('keyboard: Enter on Next until the end; the last card is visible and focus stays on Next', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto('/');
+  await loaded(page);
+  const track = list(page);
+  await nextButton(page).focus();
+  for (let i = 0; i < 5 && (await nextButton(page).getAttribute('aria-disabled')) !== 'true'; i++) {
+    await page.keyboard.press('Enter');
+    await settledScroll(track);
+  }
+  await expect(nextButton(page)).toHaveAttribute('aria-disabled', 'true');
+  await page.keyboard.press('Enter');
+  await expect(nextButton(page)).toBeFocused();
+  expect((await geometry(track)).lastEndRoom).toBeGreaterThanOrEqual(5);
+});
+
+test('reduced motion: Next scrolls without smooth behavior', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(() => {
+    const calls: unknown[] = [];
+    (window as unknown as { __scrolls: unknown[] }).__scrolls = calls;
+    // Wrapped and re-called with the element as `this`.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function scrollIntoView(this: Element, arg?: boolean | ScrollIntoViewOptions) {
+      calls.push(arg);
+      original.call(this, arg);
+    };
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await loaded(page);
+  await nextButton(page).click();
+  expect(await page.evaluate(() => (window as unknown as { __scrolls: unknown[] }).__scrolls)).toEqual([
+    { inline: 'start', block: 'nearest', behavior: 'auto' },
+  ]);
+  // Instant: already at rest on the first frame after the click.
+  expect(await list(page).evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
 });

@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import gamesJson from '../../../public/api/games.json?raw';
 import promosJson from '../../../public/api/promos.json?raw';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
+import { setFullyVisible, triggerResize } from '../../test/observers';
 import { setupUser } from '../../test/user';
 import { Catalog } from '../catalog/Catalog';
 import { CatalogProvider } from '../catalog/CatalogProvider';
 import { Promos } from './Promos';
+import { FINE_POINTER } from './usePromoScroller';
 
 let promosResponse: () => Response;
 let fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
@@ -201,5 +203,118 @@ describe('Promos', () => {
     expect(within(section).getByRole('button', { name: 'Try again' })).toBeDefined();
     expect(within(section).queryByRole('list')).toBeNull();
     expect(within(section).queryByRole('alert')).toBeNull();
+  });
+});
+
+describe('Promos Prev/Next', () => {
+  const REDUCE = '(prefers-reduced-motion: reduce)';
+  let matching: Set<string>;
+  let size: { scroll: number; client: number };
+
+  beforeEach(() => {
+    matching = new Set([FINE_POINTER]);
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query) =>
+        ({
+          matches: matching.has(query),
+          media: query,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+        }) as unknown as MediaQueryList,
+    );
+    size = { scroll: 1600, client: 1000 };
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(() => size.scroll);
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => size.client);
+  });
+
+  const prev = () => screen.getByRole('button', { name: 'Previous promotions' });
+  const next = () => screen.getByRole('button', { name: 'Next promotions' });
+  const items = () => [...promoList().children];
+  /** Cards [from, to] are fully visible, as the IntersectionObserver reports after a scroll. */
+  const show = (from: number, to: number) => {
+    act(() => {
+      setFullyVisible((_card, i) => i >= from && i <= to);
+    });
+  };
+
+  async function loaded(url = '') {
+    renderLobby(url);
+    await advance(1100);
+    show(0, 2);
+  }
+
+  it('next = first card after the last fully visible one, prev = last before the first; smooth, inline start', async () => {
+    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView');
+    await loaded();
+    expect(prev().getAttribute('aria-disabled')).toBe('true');
+    expect(next().hasAttribute('aria-disabled')).toBe(false);
+    expect(next().getAttribute('aria-controls')).toBe(promoList().id);
+
+    fireEvent.click(next());
+    expect(scrollSpy.mock.contexts).toEqual([items()[3]]);
+    expect(scrollSpy).toHaveBeenLastCalledWith({ inline: 'start', block: 'nearest', behavior: 'smooth' });
+
+    show(2, 4);
+    expect(next().getAttribute('aria-disabled')).toBe('true');
+    expect(prev().hasAttribute('aria-disabled')).toBe(false);
+    fireEvent.click(prev());
+    expect(scrollSpy.mock.contexts.at(-1)).toBe(items()[1]);
+  });
+
+  it('at the end, Enter on Next is a no-op and focus stays on the button (aria-disabled, not disabled)', async () => {
+    const user = setupUser();
+    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView');
+    await loaded();
+    next().focus();
+    await user.keyboard('{Enter}');
+    show(3, 4);
+    expect(next().getAttribute('aria-disabled')).toBe('true');
+    expect(next().hasAttribute('disabled')).toBe(false);
+    scrollSpy.mockClear();
+
+    await user.keyboard('{Enter}');
+    expect(scrollSpy).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(next());
+  });
+
+  it('reduced motion: the scroll is not smooth', async () => {
+    matching.add(REDUCE);
+    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView');
+    await loaded();
+    fireEvent.click(next());
+    expect(scrollSpy).toHaveBeenLastCalledWith({ inline: 'start', block: 'nearest', behavior: 'auto' });
+  });
+
+  it('no buttons while nothing overflows; they follow the track size (ResizeObserver)', async () => {
+    size = { scroll: 1000, client: 1000 };
+    await loaded();
+    expect(screen.queryByRole('button', { name: 'Next promotions' })).toBeNull();
+
+    size = { scroll: 1600, client: 1000 };
+    act(() => {
+      triggerResize();
+    });
+    expect(next()).toBeDefined();
+    expect(promoList().className).toContain('withControls');
+
+    size = { scroll: 1000, client: 1000 };
+    act(() => {
+      triggerResize();
+    });
+    expect(screen.queryByRole('button', { name: 'Previous promotions' })).toBeNull();
+    expect(promoList().className).not.toContain('withControls');
+  });
+
+  it('no buttons on a touch (coarse) pointer even when the track overflows', async () => {
+    matching.clear();
+    await loaded();
+    expect(screen.queryByRole('button', { name: 'Next promotions' })).toBeNull();
+  });
+
+  it('no buttons in the loading, error and empty states', async () => {
+    renderLobby('?mock=fail-promos');
+    expect(screen.queryByRole('button', { name: 'Next promotions' })).toBeNull();
+    await advance(1100);
+    expect(screen.queryByRole('button', { name: 'Next promotions' })).toBeNull();
   });
 });
