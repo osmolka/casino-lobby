@@ -50,7 +50,6 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 ## Open issues
 <!-- One line each: what, where, how to reproduce -->
 - `npm audit`: 8 high, dev-only (braces via stylelint → globby/fast-glob), no fix upstream; `npm audit --omit=dev` = 0.
-- axe `label-content-name-mismatch` on game cards (name = title + provider via aria-labelledby, phase 2b). Filtered in `a11y.spec.ts` (KNOWN). Fix or accept in phase 7.
 - Dev server shows unstyled content briefly (Vite injects CSS via JS in dev); theme attr is already correct. Preview/prod has no flash.
 
 ## For README (assumptions)

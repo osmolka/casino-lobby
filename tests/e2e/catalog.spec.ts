@@ -14,8 +14,8 @@ interface ViewState {
 /** Everything a user sees of the filter state, plus the card list in order. */
 function viewState(page: Page): Promise<ViewState> {
   return page.evaluate(() => {
-    const text = (id: string) => document.getElementById(id)?.textContent ?? '';
-    const name = (a: Element) => (a.getAttribute('aria-labelledby') ?? '').split(' ').map(text).join(' | ');
+    // A card's accessible name comes from its content (see 'cards are named by their visible content').
+    const name = (a: Element) => a.textContent;
     return {
       url: location.search + location.hash,
       names: [...document.querySelectorAll('main a[href^="#game-"]')].map(name),
@@ -104,6 +104,15 @@ test('combined view: history, Back/Forward, card link and deep links reproduce i
   await lobby.goto(`/?q=a&sort=rtp&tag=megaways&prov=${prov}&cat=slots`);
   await ready(page);
   expect(await viewState(page)).toEqual(s5);
+});
+
+test('cards are named by their visible content (Label in Name)', async ({ page }) => {
+  await page.goto('/');
+  await ready(page);
+  const card = page.locator('main a[href^="#game-"]').first();
+  await expect(card).not.toHaveAttribute('aria-labelledby');
+  await expect(card).toHaveAccessibleName('Neon Treasure Ember Games Bonus buy New RTP 97.72% Bet €0.20 – €500.00');
+  await expect(card).toHaveAccessibleDescription('Bonus buy New RTP 97.72% Bet €0.20 – €500.00');
 });
 
 test('garbage URL renders the full catalog', async ({ page, lobby }) => {

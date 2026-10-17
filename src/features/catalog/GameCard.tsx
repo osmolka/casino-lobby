@@ -11,7 +11,7 @@ export const BET_CURRENCY = 'EUR';
 
 /**
  * A link to `#game-<id>` (there is no game page); the card is its own :target.
- * Name = title + provider; tags, RTP and bets are the description.
+ * Name = the visible content (WCAG 2.5.3 Label in Name); tags, RTP and bets are also the description.
  */
 export const GameCard = memo(function GameCard({ game }: { game: Game }) {
   const { t, locale } = useI18n();
@@ -21,15 +21,14 @@ export const GameCard = memo(function GameCard({ game }: { game: Game }) {
       id={base}
       href={`#${base}`}
       className={styles.card}
-      aria-labelledby={`${base}-title ${base}-provider`}
       aria-describedby={`${base}-details`}
     >
       <GameThumb id={game.id} hue={game.hue} />
       <span className={styles.body}>
-        <span id={`${base}-title`} className={styles.title}>
+        <span className={styles.title}>
           {game.title}
         </span>
-        <span id={`${base}-provider`} className={styles.provider}>
+        <span className={styles.provider}>
           {game.providerName}
         </span>
         <span id={`${base}-details`} className={styles.details}>

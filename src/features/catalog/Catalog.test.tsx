@@ -77,15 +77,24 @@ async function load(ms = 1000) {
   });
 }
 
-/** Card accessible names (aria-labelledby: title + provider), in DOM order. */
-const cardNames = () => screen.queryAllByRole('link').map(accessibleName);
-function accessibleName(el: HTMLElement): string {
-  return (el.getAttribute('aria-labelledby') ?? '')
-    .split(' ')
-    .map((id) => document.getElementById(id)?.textContent ?? '')
-    .join(' ');
+/**
+ * Card accessible names as Testing Library computes them (from content), in DOM order. jsdom has no CSS,
+ * so the inline parts join without spaces; the browser form is asserted in e2e (catalog.spec.ts).
+ */
+function cardNames(): string[] {
+  const names = new Map<Element, string>();
+  const links = screen.queryAllByRole('link', {
+    name: (name, el) => {
+      names.set(el, name);
+      return true;
+    },
+  });
+  return links.map((a) => names.get(a) ?? '');
 }
-const expectedNames = (search: string) => selectGames(games, parseFilters(search)).map((g) => `${g.title} ${g.providerName}`);
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** Each name starts with title + provider; the rest (tags, RTP, bets) is covered by the card test. */
+const expectedNames = (search: string): unknown[] =>
+  selectGames(games, parseFilters(search)).map((g): unknown => expect.stringMatching(new RegExp(`^${escapeRegExp(g.title + g.providerName)}`)));
 const status = () => screen.getByRole('status');
 const pressed = (group: string, name: string) =>
   within(screen.getByRole('group', { name: group })).getByRole('button', { name }).getAttribute('aria-pressed');
@@ -111,7 +120,10 @@ describe('Catalog', () => {
     await load();
 
     expect(cardNames()).toEqual(expectedNames(url));
-    expect(cardNames()).toEqual(['Ember Megaways Ember Games', 'Book of Dawn Pixel Oak']);
+    expect(cardNames()).toEqual([
+      'Ember MegawaysEmber GamesMegawaysRTP 96.8%Bet €0.10 – €100.00',
+      'Book of DawnPixel OakMegawaysJackpotRTP 95.9%Bet €0.10 – €100.00',
+    ]);
     expect(pressed('Category', 'Slots')).toBe('true');
     expect(pressed('Category', 'All')).toBe('false');
     expect(pressed('Tag', 'Megaways')).toBe('true');
@@ -237,10 +249,11 @@ describe('Catalog', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('cards are #game-<id> links named by title and provider, described by tags, RTP and bets', async () => {
+  it('cards are #game-<id> links named by their visible content (Label in Name), described by tags, RTP and bets', async () => {
     renderCatalog();
     await load();
-    const card = screen.getByRole('link', { name: 'Book of Embers Ember Games' });
+    const card = screen.getByRole('link', { name: 'Book of EmbersEmber GamesBonus buyRTP 96.5%Bet €0.20 – €100.00' });
+    expect(card.hasAttribute('aria-labelledby')).toBe(false);
     expect(card.getAttribute('href')).toBe('#game-a');
     expect(card.id).toBe('game-a');
     const details = document.getElementById(card.getAttribute('aria-describedby') ?? '');

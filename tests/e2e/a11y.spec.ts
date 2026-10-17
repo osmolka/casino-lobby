@@ -4,21 +4,9 @@ import { expect, test } from './fixtures';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
-/**
- * Known, tracked in PROGRESS.md (open issues): game cards are named "title provider" via aria-labelledby
- * (phase 2b); the name contains the visible title, but axe's heuristic wants all card text (tags, RTP, bets).
- */
-const KNOWN = [{ rule: 'label-content-name-mismatch', target: /^#game-/ }];
-
 async function axe(page: Page) {
   const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-  return violations
-    .map((v) => ({
-      id: v.id,
-      targets: v.nodes.map((n) => n.target.join(' ')).filter((t) => !KNOWN.some((k) => k.rule === v.id && k.target.test(t))),
-    }))
-    .filter((v) => v.targets.length > 0)
-    .map((v) => `${v.id}: ${v.targets.join(', ')}`);
+  return violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
 }
 
 for (const scheme of ['light', 'dark'] as const) {
