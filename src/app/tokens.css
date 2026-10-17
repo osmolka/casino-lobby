@@ -82,3 +82,35 @@
 :root[dir='rtl'] {
   --dir: -1;
 }
+
+/*
+ * Fallbacks for the button families. Without these an unsupported value makes var(--btn-hover) invalid at
+ * computed-value time, the hover background becomes transparent, and white text on an accent button vanishes.
+ * 1. No relative color syntax (oklch(from …)): mix toward black (light) or white (dark) in OKLCH. Hue kept,
+ *    same lightness step as --accent-shift (−0.06 / +0.06, ×1.8 active), chroma a little lower.
+ * 2. No color-mix either: plain tokens (no tint, readable text).
+ * The percentages are checked in tokens.test.ts.
+ */
+@supports not (color: oklch(from red l c h)) {
+  :root,
+  :root[data-theme='light'] {
+    --accent-hover: color-mix(in oklch, var(--accent) 88%, black);
+    --accent-active: color-mix(in oklch, var(--accent) 78%, black);
+  }
+
+  :root[data-theme='dark'] {
+    --accent-hover: color-mix(in oklch, var(--accent) 77%, white);
+    --accent-active: color-mix(in oklch, var(--accent) 58%, white);
+  }
+}
+
+@supports not (color: color-mix(in oklch, red, blue)) {
+  :root,
+  :root[data-theme='light'],
+  :root[data-theme='dark'] {
+    --accent-hover: var(--accent);
+    --accent-active: var(--accent);
+    --neutral-hover: var(--surface);
+    --neutral-active: var(--surface);
+  }
+}

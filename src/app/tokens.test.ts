@@ -1,6 +1,6 @@
 import css from './tokens.css?raw';
 import { describe, expect, it } from 'vitest';
-import { contrastRatio, hslToHex, mixOklch, parseHex, shiftLightness } from '../shared/contrast';
+import { contrastRatio, hexToOklch, hslToHex, mixOklch, parseHex, shiftLightness } from '../shared/contrast';
 
 function block(selector: string): string {
   const start = css.indexOf(selector);
@@ -160,5 +160,41 @@ describe.each(["[data-theme='light']", "[data-theme='dark']"])('button hover fam
   ] as const)(`selected chip %s vs unselected %s ≥ ${UI}:1`, (selected, unselected) => {
     const a = selected === 'accent' ? accent : backgrounds[selected];
     expect(contrastRatio(a, backgrounds[unselected])).toBeGreaterThanOrEqual(UI);
+  });
+});
+
+// Fallback without relative color syntax (@supports block in tokens.css): accent mixed toward black/white.
+describe.each([
+  ["[data-theme='light']", 'black', '#000000'],
+  ["[data-theme='dark']", 'white', '#ffffff'],
+] as const)('button hover fallback (no oklch(from …)) %s', (selector, keyword, target) => {
+  const t = tokens(selector);
+  const fallback = css.slice(css.indexOf('@supports not (color: oklch(from'));
+  const weight = (name: string) => {
+    const scope = fallback.slice(fallback.indexOf(selector));
+    const m = new RegExp(`--${name}: color-mix\\(in oklch, var\\(--accent\\) ([\\d.]+)%, ${keyword}\\)`).exec(scope);
+    return m ? Number(m[1]) / 100 : NaN;
+  };
+  const shift = Number(new RegExp(`--accent-shift:\\s*(-?[\\d.]+)`).exec(block(selector))?.[1]);
+  const accent = t.accent ?? '';
+  const states = { hover: mixOklch(accent, weight('accent-hover'), target), active: mixOklch(accent, weight('accent-active'), target) };
+  const neutral = {
+    hover: mixOklch(accent, mixWeight('neutral-hover'), t.surface ?? ''),
+    active: mixOklch(accent, mixWeight('neutral-active'), t.surface ?? ''),
+  };
+
+  it.each(['hover', 'active'] as const)(`accent-fg on the fallback accent-%s ≥ ${TEXT}:1`, (state) => {
+    expect(contrastRatio(t['accent-fg'] ?? '', states[state])).toBeGreaterThanOrEqual(TEXT);
+  });
+
+  it.each(['hover', 'active'] as const)(`selected chip (fallback accent-%s) vs unselected ≥ ${UI}:1`, (state) => {
+    expect(contrastRatio(states[state], neutral[state])).toBeGreaterThanOrEqual(UI);
+  });
+
+  it('takes the same lightness step as the oklch(from …) tokens (±0.01)', () => {
+    const l = (hex: string) => hexToOklch(hex).l;
+    expect(l(states.hover) - l(accent)).toBeCloseTo(shift, 1);
+    expect(Math.abs(l(states.hover) - l(accent) - shift)).toBeLessThanOrEqual(0.01);
+    expect(Math.abs(l(states.active) - l(accent) - shiftFactor('accent-active') * shift)).toBeLessThanOrEqual(0.01);
   });
 });

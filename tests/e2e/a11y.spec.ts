@@ -12,7 +12,8 @@ async function axe(page: Page) {
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`axe, ${scheme}`, () => {
     test.beforeEach(async ({ page }) => {
-      await page.emulateMedia({ colorScheme: scheme });
+      // Reduced motion: axe must see final colors, not a feed row halfway through its fade-in.
+      await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
       await page.goto('/');
       await expect(page.locator('main [aria-busy="true"]')).toHaveCount(0);
       await expect(page.getByRole('button', { name: /^Balance:/ })).toBeVisible();
@@ -87,7 +88,8 @@ for (const scheme of ['light', 'dark'] as const) {
 
 for (const scheme of ['light', 'dark'] as const) {
   test(`axe, ${scheme}: promos loading, error and empty`, async ({ page }) => {
-    await page.emulateMedia({ colorScheme: scheme });
+    // Reduced motion: axe must see final colors, not a feed row halfway through its fade-in.
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
     const promos = page.getByRole('region', { name: 'Promotions' });
 
     await page.goto('/?mock=slow');

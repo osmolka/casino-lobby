@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import type { Locator, Page } from '@playwright/test';
 import { oklch, samplePixel, stateForcer, type Rgb } from './color';
@@ -58,7 +60,7 @@ const contrast = (a: Rgb, b: Rgb) => {
 
 type Forcer = Awaited<ReturnType<typeof stateForcer>>;
 
-async function checkTarget(page: Page, forcer: Forcer, target: Target) {
+async function checkTarget(page: Page, forcer: Forcer, target: Target, { chroma = true } = {}) {
   const el = target.get(page);
   await expect(el).toBeVisible();
   for (const state of ['hover', 'active'] as const) {
@@ -69,7 +71,7 @@ async function checkTarget(page: Page, forcer: Forcer, target: Target) {
     await expect.poll(() => el.evaluate((e) => getComputedStyle(e).backgroundColor), { message: label }).toBe(token);
 
     const pixel = await samplePixel(page, el);
-    if (target.family === 'neutral') expect(oklch(pixel).c, `${label} chroma`).toBeGreaterThan(MIN_NEUTRAL_CHROMA);
+    if (chroma && target.family === 'neutral') expect(oklch(pixel).c, `${label} chroma`).toBeGreaterThan(MIN_NEUTRAL_CHROMA);
     const text = rgbOf(await el.evaluate((e) => getComputedStyle(e).color));
     expect(contrast(text, pixel), `${label} text contrast`).toBeGreaterThanOrEqual(4.5);
     await forcer.clear();
@@ -102,5 +104,53 @@ for (const scheme of ['light', 'dark'] as const) {
     const retryForcer = await stateForcer(page);
     await checkTarget(page, retryForcer, RETRY);
     await retryForcer.detach();
+  });
+}
+
+/** The rules inside `@supports not (<condition>…) { … }` in tokens.css, unwrapped. */
+function fallbackRules(condition: string): string {
+  const css = readFileSync(join(process.cwd(), 'src/app/tokens.css'), 'utf8');
+  const at = css.indexOf(`@supports not (${condition}`);
+  const open = css.indexOf('{', at);
+  let depth = 0;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === '{') depth += 1;
+    if (css[i] === '}' && --depth === 0) return css.slice(open + 1, i);
+  }
+  throw new Error(`no @supports not (${condition}…) block`);
+}
+
+// Chromium supports both features, so the @supports branches never apply here. Injecting their rules
+// unwrapped shows what a browser without the feature gets: hover still works and text stays readable.
+for (const scheme of ['light', 'dark'] as const) {
+  test(`${scheme}: fallbacks without oklch(from …) and without color-mix keep hover working`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+    await page.goto('/');
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    const forcer = await stateForcer(page);
+    const accentTargets = TARGETS.filter((t) => t.family === 'accent');
+    const search = TARGETS.find((t) => t.name === 'Search');
+
+    const declared = (name: string) =>
+      page.evaluate((n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim(), name);
+    expect(await declared('--accent-hover')).toMatch(/^oklch\(from /);
+
+    const noRelative = await page.addStyleTag({ content: fallbackRules('color: oklch(from') });
+    // Computed custom properties have var() substituted: color-mix(in oklch, #6b2fd6 88%, black).
+    expect(await declared('--accent-hover')).toMatch(/^color-mix\(in oklch, #[0-9a-f]{6} \d+%, (black|white)\)$/);
+    expect(await declared('--accent-active')).toMatch(/^color-mix\(/);
+    for (const target of accentTargets) await checkTarget(page, forcer, target);
+    await noRelative.evaluate((style) => {
+      (style as ChildNode).remove();
+    });
+
+    await page.addStyleTag({ content: fallbackRules('color: color-mix(') });
+    expect(await declared('--accent-hover')).toBe(await declared('--accent'));
+    expect(await declared('--neutral-hover')).toBe(await declared('--surface'));
+    for (const target of [...accentTargets, ...(search ? [search] : [])]) {
+      await checkTarget(page, forcer, target, { chroma: false });
+    }
+    await forcer.detach();
   });
 }
