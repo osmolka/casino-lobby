@@ -4,7 +4,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 
 ## Status
 - done: 1 scaffold/themes/i18n/layout/fixture · 2a catalog data/filters/URL · 2b catalog UI · 3 wallet/deposit · 4 live feed (commits `phase <id>: …`)
-- todo: 5 promos, palette (H3), polish · 6a H4 accent, H1 Russian · 6b H2 PWA · 6c H5 jackpot (only if approved) · 7 QA, RTL, docs
+- todo: 5a fuzzy.ts + command palette (H3) · 5b promos, polish · 6a H4 accent, H1 Russian · 6b H2 PWA · 6c H5 jackpot (only if approved) · 7 QA, RTL, docs
 
 ## Decisions and deviations from PLAN.md (phase — decision — reason)
 - 1 — Pinned TS 6.0.3 / ESLint 9.39.5 (not latest 7.x / 10.x) — typescript-eslint needs TS <6.1; jsx-a11y supports ESLint ≤9.
@@ -62,5 +62,5 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 ## Bonus claim status (H1–H5: claimed / not claimed + one-line reason; filled in phases 6–7)
 
 ## Next
-- Phase 5: promos, command palette (H3), polish. The palette takes games from the already-loaded catalog data: no third `games.json` request. Dialog/palette tests: see the user-event + fake timers note (2b).
+- Phase 5a: fuzzy.ts + command palette (H3). The palette takes games from the already-loaded catalog data: no third `games.json` request. Dialog/palette tests: see the user-event + fake timers note (2b).
 - Phase 6b: on an offline reload the feed falls back to `catalog:v1` for titles, so catalog and feed agree. Consider one shared in-flight games request (cleared on failure) if it stays simple.

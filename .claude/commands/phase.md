@@ -14,7 +14,8 @@ Phase map (sections of PLAN.md to read; read nothing else from the plan):
 | 2b | §3, §6 "Phase 2" → "2b" and the Phase 2 DoD |
 | 3 | §3, §6 "Phase 3" |
 | 4 | §3, §6 "Phase 4" |
-| 5 | §3, §6 "Phase 5" |
+| 5a | §3, §6 "Phase 5" → "Command palette" block and the palette/`fuzzy.ts` part of the DoD |
+| 5b | §3, §6 "Phase 5" → "Promos" and "Polish" blocks and the promos part of the DoD |
 | 6a | §3, §6 "Phase 6" → "6a" |
 | 6b | §3, §6 "Phase 6" → "6b" |
 | 6c | §3, §7.1 (only if I explicitly approved H5) |
