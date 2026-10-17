@@ -23,6 +23,9 @@
   --promo-saturation: 80%;
   --promo-lightness-start: 84%;
   --promo-lightness-end: 74%;
+
+  /* Accent button hover/press: OKLCH lightness step (darker in light, lighter in dark), same hue and chroma. */
+  --accent-shift: -0.06;
 }
 
 :root[data-theme='dark'] {
@@ -44,6 +47,7 @@
   --promo-saturation: 60%;
   --promo-lightness-start: 26%;
   --promo-lightness-end: 16%;
+  --accent-shift: 0.06;
 }
 
 :root {
@@ -57,6 +61,16 @@
   --space-6: 1.5rem;
   --header-block-size: 4rem;
   --promo-hue-shift: 40;
+
+  /*
+   * Button hover/press families (global.css), derived from --accent so a new accent recolors them.
+   * Accent buttons: lightness step only. Outline/neutral buttons and chips: a little accent in --surface.
+   * Text contrast on each is checked in tokens.test.ts.
+   */
+  --accent-hover: oklch(from var(--accent) calc(l + var(--accent-shift)) c h);
+  --accent-active: oklch(from var(--accent) calc(l + 1.8 * var(--accent-shift)) c h);
+  --neutral-hover: color-mix(in oklch, var(--accent) 12%, var(--surface));
+  --neutral-active: color-mix(in oklch, var(--accent) 18%, var(--surface));
 
   /* Dropdown triggers (balance button, every select): same chevron, same inline-end spacing. */
   --control-pad-inline: var(--space-2);

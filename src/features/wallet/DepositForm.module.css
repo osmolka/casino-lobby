@@ -28,10 +28,6 @@
   background: transparent;
 }
 
-.close:hover {
-  background: var(--skeleton);
-}
-
 .body {
   display: grid;
   gap: var(--space-3);
@@ -154,6 +150,9 @@
 }
 
 .primary {
+  --btn-hover: var(--accent-hover);
+  --btn-active: var(--accent-active);
+
   border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-fg);

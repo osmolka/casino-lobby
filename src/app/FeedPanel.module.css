@@ -97,6 +97,9 @@
 }
 
 .action {
+  --btn-hover: var(--accent-hover);
+  --btn-active: var(--accent-active);
+
   padding-block: var(--space-1);
   padding-inline: var(--space-3);
   border: 1px solid var(--accent);

@@ -61,10 +61,6 @@
   background: transparent;
 }
 
-.iconButton:hover {
-  background: var(--skeleton);
-}
-
 .iconButton[aria-pressed='true'] {
   border-color: var(--accent);
   color: var(--accent);

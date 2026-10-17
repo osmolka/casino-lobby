@@ -18,7 +18,7 @@
 }
 
 .wrap .select:hover:not(:disabled) {
-  background-color: var(--skeleton);
+  background-color: var(--neutral-hover);
 }
 
 .chevron {

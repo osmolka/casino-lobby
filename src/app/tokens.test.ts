@@ -1,6 +1,6 @@
 import css from './tokens.css?raw';
 import { describe, expect, it } from 'vitest';
-import { contrastRatio, hslToHex, parseHex } from '../shared/contrast';
+import { contrastRatio, hslToHex, mixOklch, parseHex, shiftLightness } from '../shared/contrast';
 
 function block(selector: string): string {
   const start = css.indexOf(selector);
@@ -103,5 +103,62 @@ describe.each(["[data-theme='light']", "[data-theme='dark']"])('promo gradient t
       return !STOPS.every((t) => contrastRatio(fg, mix(start, end, t)) >= TEXT);
     });
     expect(failing).toEqual([]);
+  });
+});
+
+/** A factor from the generic :root block, e.g. `--neutral-hover: color-mix(in oklch, var(--accent) 12%, …)` → 0.12. */
+function mixWeight(name: string): number {
+  const m = new RegExp(`--${name}:\\s*color-mix\\(in oklch, var\\(--accent\\) ([\\d.]+)%, var\\(--surface\\)\\)`).exec(css);
+  return m ? Number(m[1]) / 100 : NaN;
+}
+/** `--accent-active: oklch(from var(--accent) calc(l + 1.8 * var(--accent-shift)) c h)` → 1.8 (1 without a factor). */
+function shiftFactor(name: string): number {
+  const m = new RegExp(`--${name}:\\s*oklch\\(from var\\(--accent\\) calc\\(l \\+ (?:([\\d.]+) \\* )?var\\(--accent-shift\\)\\) c h\\)`).exec(css);
+  return m ? Number(m[1] ?? 1) : NaN;
+}
+
+// Button hover/press families (global.css): every text color used on them keeps ≥ 4.5:1, and a selected chip
+// (accent) stays clearly apart from a hovered or pressed unselected one.
+describe.each(["[data-theme='light']", "[data-theme='dark']"])('button hover families %s', (selector) => {
+  const t = tokens(selector);
+  const shift = Number(new RegExp(`--accent-shift:\\s*(-?[\\d.]+)`).exec(block(selector))?.[1]);
+  const accent = t.accent ?? '';
+  const backgrounds = {
+    'accent-hover': shiftLightness(accent, shiftFactor('accent-hover') * shift),
+    'accent-active': shiftLightness(accent, shiftFactor('accent-active') * shift),
+    'neutral-hover': mixOklch(accent, mixWeight('neutral-hover'), t.surface ?? ''),
+    'neutral-active': mixOklch(accent, mixWeight('neutral-active'), t.surface ?? ''),
+  };
+
+  it('parses the family tokens', () => {
+    expect(shift).not.toBeNaN();
+    for (const [name, value] of Object.entries(backgrounds)) expect(value, name).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it.each([
+    ['accent-fg', 'accent-hover'],
+    ['accent-fg', 'accent-active'],
+    ['fg', 'neutral-hover'],
+    ['fg', 'neutral-active'],
+    ['fg-muted', 'neutral-hover'],
+    ['fg-muted', 'neutral-active'],
+    ['accent', 'neutral-hover'],
+    ['accent', 'neutral-active'],
+  ] as const)(`%s on %s ≥ ${TEXT}:1`, (fg, bg) => {
+    expect(contrastRatio(t[fg] ?? '', backgrounds[bg])).toBeGreaterThanOrEqual(TEXT);
+  });
+
+  it(`accent states step away from the accent (darker in light, lighter in dark)`, () => {
+    expect(Math.sign(shift)).toBe(selector.includes('dark') ? 1 : -1);
+  });
+
+  it.each([
+    ['accent', 'neutral-hover'],
+    ['accent', 'neutral-active'],
+    ['accent-hover', 'neutral-hover'],
+    ['accent-active', 'neutral-active'],
+  ] as const)(`selected chip %s vs unselected %s ≥ ${UI}:1`, (selected, unselected) => {
+    const a = selected === 'accent' ? accent : backgrounds[selected];
+    expect(contrastRatio(a, backgrounds[unselected])).toBeGreaterThanOrEqual(UI);
   });
 });

@@ -70,15 +70,16 @@ button {
 }
 
 /*
- * Baseline hover/press feedback for every button: a tint of its own text color over its background.
+ * Hover/press for every button. Neutral family by default (accent tint in --surface); accent-background
+ * buttons opt into the accent family by setting --btn-hover / --btn-active (tokens.css).
  * Specificity (0,1,1) beats a module's base `background` (0,1,0) and loses to its own `:hover` (0,2,0).
  */
 button:hover:where(:not([aria-disabled='true'])) {
-  background-image: linear-gradient(color-mix(in srgb, currentcolor 10%, transparent) 0 0);
+  background-color: var(--btn-hover, var(--neutral-hover));
 }
 
 button:active:where(:not([aria-disabled='true'])) {
-  background-image: linear-gradient(color-mix(in srgb, currentcolor 18%, transparent) 0 0);
+  background-color: var(--btn-active, var(--neutral-active));
 }
 
 button[aria-disabled='true'] {

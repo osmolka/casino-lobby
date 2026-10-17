@@ -131,6 +131,15 @@
   font-weight: 600;
 }
 
+/* The selected chip keeps the accent family on hover/press (its own background beats the global rule). */
+.chip[aria-pressed='true']:hover {
+  background-color: var(--accent-hover);
+}
+
+.chip[aria-pressed='true']:active {
+  background-color: var(--accent-active);
+}
+
 .check input {
   margin: 0;
   accent-color: var(--accent-fg);

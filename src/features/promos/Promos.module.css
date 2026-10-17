@@ -198,6 +198,9 @@
 }
 
 .action {
+  --btn-hover: var(--accent-hover);
+  --btn-active: var(--accent-active);
+
   min-block-size: 2.5rem;
   padding-block: var(--space-2);
   padding-inline: var(--space-4);
