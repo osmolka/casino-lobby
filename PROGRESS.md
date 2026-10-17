@@ -45,7 +45,9 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 - 3 — Confirm uses `aria-disabled` (not `disabled`) while in flight/offline: `disabled` drops focus to body. Guards: in-flight ref + idempotency key per attempt (provider returns the same promise for a repeated key; reducer ignores it).
 - 3 — Native `<dialog>` + showModal (`shared/Dialog.tsx`): Tab wrap, Esc via `cancel` and `close`, focus → trigger, else fallback (header Deposit), never body. Scroll lock via `:root:has(dialog:modal)` + `scrollbar-gutter: stable`. jsdom stub for showModal/close/Esc in `test/setup.ts`. New token `--backdrop`.
 - 3 — Wallet UI in the header: balance toggle → history panel (6 most recent), Deposit button (icon-only < 30rem). Failure after the dialog was closed → `role="alert"` notice in the widget. `i18n.rich()` interpolates nodes (amounts in `<bdi>`).
-- 3 — `@axe-core/playwright` 4.14.0 exact (§2 list). `tests/e2e/a11y.spec.ts` new (did not exist). E2E dwell is opt-in (`lobby.dwell()`), used only by the console-cleanliness tests (split in 4 parallel runs); fixture is `auto`, so every test checks the console. Suite: 31 tests, 29.5 s incl. build., every token must be a substring of lowercase `title providerName` (in `filterGames`; URL keeps q as typed, trimmed). `toLowerCase`, no accent folding / ru matching: catalog data is English, H1 is UI only.
+- 3 — `@axe-core/playwright` 4.14.0 exact (§2 list). `tests/e2e/a11y.spec.ts` new (did not exist). E2E dwell is opt-in (`lobby.dwell()`), used only by the console-cleanliness tests (split in 4 parallel runs); fixture is `auto`, so every test checks the console. Suite: 31 tests, 29.5 s incl. build.
+- 2a — Search: q split on whitespace, every token must be a substring of lowercase `title providerName` (in `filterGames`; URL keeps q as typed, trimmed). `toLowerCase`, no accent folding / ru matching: catalog data is English, H1 is UI only.
+- fix — Cards: no `aria-labelledby` / `aria-describedby`; name = visible content (WCAG 2.5.3), no description (it repeated the name). axe clean without filters.
 
 ## Open issues
 <!-- One line each: what, where, how to reproduce -->
@@ -59,6 +61,7 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 - Confirmed transactions persist in `localStorage` (`wallet:v1`); pending/failed never. Corrupt data → fixture history.
 
 ## For NOTES.md ("with a week")
+- Card a11y: restructure as heading link (title) + separate details, so the accessible name is shorter.
 - Search: accent/diacritic folding (`normalize('NFD')`) and locale-aware matching.
 
 ## Bonus claim status

@@ -249,15 +249,14 @@ describe('Catalog', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('cards are #game-<id> links named by their visible content (Label in Name), described by tags, RTP and bets', async () => {
+  it('cards are #game-<id> links named by their visible content (Label in Name), with no description', async () => {
     renderCatalog();
     await load();
-    const card = screen.getByRole('link', { name: 'Book of EmbersEmber GamesBonus buyRTP 96.5%Bet €0.20 – €100.00' });
+    const card = screen.getByRole('link', { name: 'Book of EmbersEmber GamesBonus buyRTP 96.5%Bet €0.20 – €100.00', description: '' });
     expect(card.hasAttribute('aria-labelledby')).toBe(false);
+    expect(card.hasAttribute('aria-describedby')).toBe(false);
     expect(card.getAttribute('href')).toBe('#game-a');
     expect(card.id).toBe('game-a');
-    const details = document.getElementById(card.getAttribute('aria-describedby') ?? '');
-    expect(details?.textContent).toBe('Bonus buyRTP 96.5%Bet €0.20 – €100.00');
     expect(card.querySelectorAll('bdi')).toHaveLength(2);
   });
 

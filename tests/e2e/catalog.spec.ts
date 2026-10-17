@@ -111,8 +111,9 @@ test('cards are named by their visible content (Label in Name)', async ({ page }
   await ready(page);
   const card = page.locator('main a[href^="#game-"]').first();
   await expect(card).not.toHaveAttribute('aria-labelledby');
+  await expect(card).not.toHaveAttribute('aria-describedby');
   await expect(card).toHaveAccessibleName('Neon Treasure Ember Games Bonus buy New RTP 97.72% Bet €0.20 – €500.00');
-  await expect(card).toHaveAccessibleDescription('Bonus buy New RTP 97.72% Bet €0.20 – €500.00');
+  await expect(card).toHaveAccessibleDescription('');
 });
 
 test('garbage URL renders the full catalog', async ({ page, lobby }) => {
