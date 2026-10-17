@@ -6,7 +6,14 @@ import { SEED_COUNT } from '../features/feed/feedStore';
 import { TIME_REFRESH_MS } from '../features/feed/FeedList';
 import { MIN_DELAY_MS } from '../features/feed/generator';
 import { LocaleProvider } from '../i18n/LocaleProvider';
+import { formatMoney } from '../shared/format';
 import { FeedPanel } from './FeedPanel';
+
+// Spy on formatMoney: one call per feed row render, so it shows whether memoized rows re-render.
+vi.mock('../shared/format', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../shared/format')>();
+  return { ...actual, formatMoney: vi.fn(actual.formatMoney) };
+});
 
 // Math.random = 0: connect after 400 ms, then exactly one win every MIN_DELAY_MS.
 const CONNECT_MS = 400;
@@ -113,6 +120,14 @@ describe('FeedPanel', () => {
     expect(rows()[0]?.textContent).toContain('just now');
   });
 
+  it('rows are memoized: a tick renders only the new row', async () => {
+    await renderPanel();
+    vi.mocked(formatMoney).mockClear();
+    await advance(MIN_DELAY_MS);
+    expect(rows()).toHaveLength(SEED_COUNT + 1);
+    expect(formatMoney).toHaveBeenCalledTimes(1);
+  });
+
   it('StrictMode: one generator per mount, not two', async () => {
     await renderPanel('', true);
     await advance(MIN_DELAY_MS * 3);
@@ -201,7 +216,7 @@ describe('FeedPanel', () => {
     });
   });
 
-  it('relative time refreshes on the 30 s timer', async () => {
+  it('relative time: "just now" under 1 minute, "1 minute ago" after the next 30 s refresh', async () => {
     await renderPanel();
     await advance(MIN_DELAY_MS);
     fireEvent.click(pauseButton());
