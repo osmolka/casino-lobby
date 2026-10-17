@@ -3,8 +3,8 @@
 Keep this file under ~60 lines. Summarize; do not log every step. Update at the end of each phase. Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 
 ## Status
-- done: 1 scaffold/themes/i18n/layout/fixture · 2a catalog data/filters/URL · 2b catalog UI · 3 wallet/deposit · 4 live feed · 5a fuzzy.ts + command palette (H3) (commits `phase <id>: …`)
-- todo: 5b promos, polish · 6a H4 accent, H1 Russian · 6b H2 PWA · 6c H5 jackpot (only if approved) · 7 QA, RTL, docs
+- done: 1 scaffold/themes/i18n/layout/fixture · 2a catalog data/filters/URL · 2b catalog UI · 3 wallet/deposit · 4 live feed · 5a fuzzy.ts + command palette (H3) · 5b promos, polish (commits `phase <id>: …`)
+- todo: 6a H4 accent, H1 Russian · 6b H2 PWA · 6c H5 jackpot (only if approved) · 7 QA, RTL, docs
 
 ## Decisions and deviations from PLAN.md (phase — decision — reason)
 - 1 — Pinned TS 6.0.3 / ESLint 9.39.5 (not latest 7.x / 10.x) — typescript-eslint needs TS <6.1; jsx-a11y supports ESLint ≤9. React 18.3.1 per §2.
@@ -41,6 +41,13 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - 5a — Selection (user-confirmed): visible game → focus card; hidden → defaults + q=title, sort kept, one push, pending debounce dropped, input synced. Provider → defaults + prov=[slug], sort kept, one push, focus h1. Catalog runs the focus in an effect, i.e. after the Dialog cleanup returned focus to the trigger; `focus({preventScroll})` + `scrollIntoView({block:'start'})` (honors scroll-margin), `behavior: auto` under reduced motion.
 - 5a — Hotkey: `code === 'KeyK'` + Ctrl/Meta, no Alt/Shift, no auto-repeat; toggles; ignored while another dialog is open. Deposit action: palette closes and the deposit dialog opens in one commit (cleanups run first; never two `dialog[open]`). jsdom `scrollIntoView` no-op stub in `test/setup.ts`. Header < 26rem hides the logo text; 360px = one row; 320px with a classic scrollbar = 2 rows (accepted, see NOTES).
 
+- 5b — Promos: `api/promos.json` = `[{id, hue, filters}]`, copy in `en.promos.items.<id>` (`PromoId` = its keys). `filters` must be canonical (`serializeFilters(parseFilters(x)) === x`), non-default, no sort; unknown id / bad target / repeated id dropped, bad shape → error. Delay 600–1100 ms (after the catalog). Mock flags `fail-promos`, `empty-promos` (PLAN §3.6 line added).
+- 5b — Card = `<a href="/?<filters>">`; a plain primary click (no modifiers, no `target`, not defaultPrevented) → `showPromo`: defaults + target + current sort in one push (same view: no entry), focus h1 via the palette's focus path. Modified clicks open the canonical view (without the current sort or `mock`).
+- 5b — Placement: `<Catalog promos={<Promos/>}>` slot right after the h1 (heading order h1 → h2 Promotions → h3 states); element made in Layout, so catalog re-renders reuse it. State local to Promos (isolation test: 0 grid commits).
+- 5b — Track: native `overflow-x` + `scroll-snap x mandatory`; padding + scroll-padding `--space-2` (ring room), negative inline margin; `min(82%, 20rem)` columns (next card peeks). Card and skeleton share `min-block-size: 10rem` (e2e: same height, no jump). Text `--fg` on `linear-gradient(135deg in srgb, …)`; tokens.test samples 101 points × 360 hues × 2 themes. Swipe e2e: CDP `Input.dispatchTouchEvent` (touch `synthesizeScrollGesture` does not scroll headless); **momentum is native and not tested**, manual check on a real device.
+- 5b — Polish: global button hover/press tint (`color-mix` of currentcolor 10/18 %, AA kept), `cursor: not-allowed` on `aria-disabled`. `cssPolish.test.ts`: no layout-property transitions, global reduced-motion rule, no spinners. E2E: 24×24 targets at 360px.
+- e2e — `npm run test:e2e` reuses any server on :4173 (`reuseExistingServer`); a running `start:pwa` serves a stale build. Stop it, or build elsewhere and use `E2E_BASE_URL`.
+
 ## Open issues
 - `npm audit`: 8 high, dev-only (braces via stylelint → globby/fast-glob), no fix upstream; `npm audit --omit=dev` = 0.
 - Dev server shows unstyled content briefly (Vite injects CSS via JS in dev); theme attr is already correct. Preview/prod has no flash.
@@ -51,6 +58,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - Rates are fixed (USD 0.92, GBP 1.17 → EUR). Limits 1–5000 per deposit in the chosen currency.
 - Confirmed transactions persist in `localStorage` (`wallet:v1`); pending/failed never. Corrupt data → fixture history.
 - Feed: wins are simulated client-side; auto-pause on mouse hover, keyboard focus on the list, hidden tab and offline; Pause button. Relative time refreshes every 30 s.
+- Promotions: each card opens a catalog view (keeps the current sort). Swipe on touch with native momentum; on desktop scroll with trackpad, the scrollbar or Tab.
 - H3 runbook line: Ctrl+K (⌘K) → `frz vlt` → Enter → the "Frozen Vault XL" card is focused (pinned in `fuzzy.test.ts`; also `imm bj` → Immersive Blackjack). A game outside the current filters → its title becomes the search (Back restores).
 
 ## For NOTES.md ("with a week")
@@ -60,8 +68,9 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - Feed: the two jsx-a11y disables on the wins list are deliberate (focusable scrollable region with pointer/focus handlers that only pause).
 - Header at 320px: `scrollbar-gutter: stable` (dialog scroll lock) reserves 15px with a classic scrollbar → 273px for 286px of logo + controls → theme toggle wraps. Overlay scrollbars (mobile emulation) → 288px, one row. Fix = ≥13px (padding + gap at < 22rem), not a one-liner.
 
+- Polish leftovers (5b, timeboxed): provider checkbox rows and native selects have no hover style; game cards have no `:active`; focused headings (tabIndex −1) show the ring after keyboard use; promos have no arrow buttons for mice without horizontal scroll.
+
 ## Bonus claim status (H1–H5: claimed / not claimed + one-line reason; filled in phases 6–7)
 
 ## Next
-- Phase 5b: promos + polish. E2E for the palette lives in `tests/e2e/palette.spec.ts` (+ axe case in `a11y.spec.ts`).
-- Phase 6b: on an offline reload the feed falls back to `catalog:v1` for titles, so catalog and feed agree. Consider one shared in-flight games request (cleared on failure) if it stays simple.
+- Phase 6b: on an offline reload the feed falls back to `catalog:v1` for titles, so catalog and feed agree. Consider one shared in-flight games request (cleared on failure) if it stays simple. Promos offline: precache `api/promos.json` in the SW or give promos a fallback (e.g. `promos:v1`), so catalog and promos agree offline.

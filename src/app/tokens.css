@@ -18,6 +18,11 @@
   /* Feed avatars: hsl(<hue> s l) behind --fg initials, AA for every hue (tokens.test.ts). */
   --avatar-saturation: 70%;
   --avatar-lightness: 82%;
+
+  /* Promo cards: --fg on a gradient from hsl(<hue> s start) to hsl(<hue + shift> s end), AA at every point. */
+  --promo-saturation: 80%;
+  --promo-lightness-start: 84%;
+  --promo-lightness-end: 74%;
 }
 
 :root[data-theme='dark'] {
@@ -36,6 +41,9 @@
   --backdrop: rgb(0 0 0 / 70%);
   --avatar-saturation: 50%;
   --avatar-lightness: 28%;
+  --promo-saturation: 60%;
+  --promo-lightness-start: 26%;
+  --promo-lightness-end: 16%;
 }
 
 :root {
@@ -48,6 +56,7 @@
   --space-4: 1rem;
   --space-6: 1.5rem;
   --header-block-size: 4rem;
+  --promo-hue-shift: 40;
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', roboto, 'Helvetica Neue', arial, sans-serif;
 }
 

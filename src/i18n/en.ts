@@ -158,6 +158,48 @@ export const en = {
       clearFilters: 'Clear filters',
     },
   },
+  promos: {
+    title: 'Promotions',
+    list: 'Current promotions',
+    loading: 'Loading promotions',
+    retry: 'Try again',
+    error: {
+      title: 'Promotions did not load',
+      body: 'Could not load the current offers. Check your connection and try again.',
+    },
+    empty: {
+      title: 'No promotions right now',
+      body: 'New offers will appear here. Try again later.',
+    },
+    // Keys are the promo ids in api/promos.json (PromoId is derived from them).
+    items: {
+      liveWeek: {
+        title: 'Live Casino Week',
+        body: 'Real dealers, real tables. Join a live game tonight.',
+        cta: 'Play live',
+      },
+      freshReleases: {
+        title: 'Fresh releases',
+        body: 'The newest games in the lobby, ready to play.',
+        cta: 'See what’s new',
+      },
+      jackpotHunt: {
+        title: 'Jackpot hunt',
+        body: 'Progressive prizes that grow with every spin.',
+        cta: 'Chase a jackpot',
+      },
+      megaways: {
+        title: 'Megaways madness',
+        body: 'Thousands of ways to win on every spin.',
+        cta: 'Spin Megaways',
+      },
+      tableClassics: {
+        title: 'Table classics',
+        body: 'Blackjack, roulette and baccarat, dealt your way.',
+        cta: 'Take a seat',
+      },
+    },
+  },
   feed: {
     title: 'Live wins',
     show: 'Show live wins',

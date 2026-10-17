@@ -109,6 +109,7 @@ The reviewer values **judgment over feature count** and will probe the build. Pr
 Every async region (catalog, feed, wallet, promos) has: a **skeleton** (not a spinner), an **error** state with retry, and an **empty** state with a clear action.
 
 Failure injection for verification (works in both dev and preview): `?mock=fail-catalog`, `?mock=fail-feed`, `?mock=fail-wallet`, `?mock=empty-feed`, `?mock=slow` (several values comma-separated). The `mock` param is not part of filter state.
+Promos (added in phase 5b): `?mock=fail-promos`, `?mock=empty-promos`.
 
 ---
 

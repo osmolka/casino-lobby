@@ -69,6 +69,22 @@ button {
   cursor: pointer;
 }
 
+/*
+ * Baseline hover/press feedback for every button: a tint of its own text color over its background.
+ * Specificity (0,1,1) beats a module's base `background` (0,1,0) and loses to its own `:hover` (0,2,0).
+ */
+button:hover:where(:not([aria-disabled='true'])) {
+  background-image: linear-gradient(color-mix(in srgb, currentcolor 10%, transparent) 0 0);
+}
+
+button:active:where(:not([aria-disabled='true'])) {
+  background-image: linear-gradient(color-mix(in srgb, currentcolor 18%, transparent) 0 0);
+}
+
+button[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
 :focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;

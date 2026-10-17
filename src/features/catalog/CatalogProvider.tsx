@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { filtersForProvider, filtersToReveal } from './navigation';
+import type { Filters } from './filters';
+import { filtersForPromo, filtersForProvider, filtersToReveal } from './navigation';
 import type { Game } from './types';
 import { useCatalog, type CatalogResult } from './useCatalog';
 import { useCatalogFilters, type CatalogFilters } from './useCatalogFilters';
@@ -19,6 +20,8 @@ interface CatalogContextValue {
   showProvider: (slug: string) => void;
   /** Clears every filter and focuses the results heading. */
   clearFilters: () => void;
+  /** Promo card: shows the target view (current sort kept) and focuses the results heading. */
+  showPromo: (target: Filters) => void;
 }
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
@@ -56,6 +59,14 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     [applied, navigate],
   );
 
+  const showPromo = useCallback(
+    (target: Filters) => {
+      navigate(filtersForPromo(applied, target));
+      setFocus({ target: 'heading' });
+    },
+    [applied, navigate],
+  );
+
   const clearFilters = useCallback(() => {
     reset();
     setFocus({ target: 'heading' });
@@ -66,8 +77,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ catalog, filters, focus, focusDone, showGame, showProvider, clearFilters }),
-    [catalog, filters, focus, focusDone, showGame, showProvider, clearFilters],
+    () => ({ catalog, filters, focus, focusDone, showGame, showProvider, clearFilters, showPromo }),
+    [catalog, filters, focus, focusDone, showGame, showProvider, clearFilters, showPromo],
   );
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
 }

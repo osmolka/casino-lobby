@@ -1,0 +1,175 @@
+.promos {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.heading {
+  font-size: 1.125rem;
+  font-weight: 700;
+  scroll-margin-block-start: calc(var(--header-block-size) + var(--space-4));
+}
+
+/*
+ * The scroll container. Its padding keeps the focus ring of edge cards inside the scrollport (3px outline +
+ * 2px offset < --space-2); the negative margin keeps the cards aligned with the rest of the page.
+ * Cards narrower than the track let the next one peek; scroll-padding matches the padding, so a snapped
+ * card keeps room for its ring, and the end padding makes the last card fully reachable.
+ */
+.track {
+  display: grid;
+  grid-auto-columns: min(82%, 20rem);
+  grid-auto-flow: column;
+  gap: var(--space-3);
+  margin: 0;
+  margin-inline: calc(-1 * var(--space-2));
+  padding: var(--space-2);
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: var(--space-2);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.skeletonTrack {
+  overflow: hidden;
+}
+
+.item {
+  display: grid;
+  min-inline-size: 0;
+  scroll-snap-align: start;
+}
+
+/* Same box as .placeholder: the loaded track is exactly as tall as the skeleton (no catalog jump). */
+.card,
+.placeholder {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  min-block-size: 10rem;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.card {
+  /* Text is --fg on every point of this gradient in both themes (tokens.test.ts). */
+  background: linear-gradient(
+    135deg in srgb,
+    hsl(var(--promo-hue) var(--promo-saturation) var(--promo-lightness-start)),
+    hsl(calc(var(--promo-hue) + var(--promo-hue-shift)) var(--promo-saturation) var(--promo-lightness-end))
+  );
+  color: var(--fg);
+  text-decoration: none;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.placeholder {
+  background: var(--surface);
+}
+
+.placeholderCta {
+  align-self: end;
+}
+
+.card:hover {
+  box-shadow: var(--shadow);
+}
+
+.card:active {
+  transform: scale(0.98);
+}
+
+.title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.body {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  align-self: end;
+  gap: var(--space-1);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Directional icon: points to inline-end and nudges toward it on hover; --dir mirrors both in RTL. */
+.arrow {
+  flex: none;
+  transform: scaleX(var(--dir));
+  transition: transform 0.15s ease;
+}
+
+.card:hover .arrow {
+  transform: translateX(calc(var(--dir) * 3px)) scaleX(var(--dir));
+}
+
+.state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.stateText {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  font-size: 0.875rem;
+}
+
+.stateTitle {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.action {
+  min-block-size: 2.5rem;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:active {
+    transform: none;
+  }
+
+  .card:hover .arrow {
+    transform: scaleX(var(--dir));
+  }
+}

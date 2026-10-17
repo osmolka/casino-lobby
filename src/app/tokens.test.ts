@@ -1,6 +1,6 @@
 import css from './tokens.css?raw';
 import { describe, expect, it } from 'vitest';
-import { contrastRatio, hslToHex } from '../shared/contrast';
+import { contrastRatio, hslToHex, parseHex } from '../shared/contrast';
 
 function block(selector: string): string {
   const start = css.indexOf(selector);
@@ -58,6 +58,41 @@ describe.each(["[data-theme='light']", "[data-theme='dark']"])('avatar initials 
     expect(s, 'avatar-saturation').toBeDefined();
     expect(l, 'avatar-lightness').toBeDefined();
     const failing = HUES.filter((h) => !(contrastRatio(fg, hslToHex(h, s ?? NaN, l ?? NaN)) >= TEXT));
+    expect(failing).toEqual([]);
+  });
+});
+
+/** `--promo-hue-shift: 40` → 40 (unitless numbers on :root). */
+function number(name: string): number {
+  const m = new RegExp(`--${name}:\\s*(-?[\\d.]+)\\s*;`).exec(css);
+  return m ? Number(m[1]) : NaN;
+}
+
+/** sRGB interpolation of two '#rrggbb' colors (the cards use `linear-gradient(… in srgb, …)`). */
+function mix(a: string, b: string, t: number): string {
+  const [ra, rb] = [parseHex(a), parseHex(b)];
+  if (!ra || !rb) return '';
+  return `#${ra.map((c, i) => Math.round(c + ((rb[i] ?? 0) - c) * t).toString(16).padStart(2, '0')).join('')}`;
+}
+
+const STOPS = Array.from({ length: 101 }, (_, i) => i / 100);
+
+// Promo cards: --fg text on a gradient from hsl(<hue> s start) to hsl(<hue + shift> s end), hue 0–359 from
+// promos.json. Every point of the gradient (101 samples) is checked, so the worst point passes.
+describe.each(["[data-theme='light']", "[data-theme='dark']"])('promo gradient text %s', (selector) => {
+  it(`fg at every gradient point, every hue ≥ ${TEXT}:1`, () => {
+    const fg = tokens(selector).fg ?? '';
+    const shift = number('promo-hue-shift');
+    const { 'promo-saturation': s, 'promo-lightness-start': l1, 'promo-lightness-end': l2 } = percents(selector);
+    expect(shift, 'promo-hue-shift').not.toBeNaN();
+    for (const [name, value] of [['saturation', s], ['lightness-start', l1], ['lightness-end', l2]] as const) {
+      expect(value, `promo-${name}`).toBeDefined();
+    }
+    const failing = HUES.filter((h) => {
+      const start = hslToHex(h, s ?? NaN, l1 ?? NaN);
+      const end = hslToHex((h + shift) % 360, s ?? NaN, l2 ?? NaN);
+      return !STOPS.every((t) => contrastRatio(fg, mix(start, end, t)) >= TEXT);
+    });
     expect(failing).toEqual([]);
   });
 });

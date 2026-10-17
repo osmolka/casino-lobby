@@ -1,0 +1,7 @@
+[
+  { "id": "liveWeek", "hue": 350, "filters": "cat=live" },
+  { "id": "freshReleases", "hue": 160, "filters": "tag=new" },
+  { "id": "jackpotHunt", "hue": 42, "filters": "tag=jackpot" },
+  { "id": "megaways", "hue": 270, "filters": "cat=slots&tag=megaways" },
+  { "id": "tableClassics", "hue": 200, "filters": "cat=table" }
+]

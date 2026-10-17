@@ -1,6 +1,7 @@
 import { StrictMode, type ProfilerOnRenderCallback } from 'react';
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import promosJson from '../../public/api/promos.json?raw';
 import { makeGame } from '../features/catalog/testGames';
 import { SEED_COUNT } from '../features/feed/feedStore';
 import { MIN_DELAY_MS } from '../features/feed/generator';
@@ -29,7 +30,9 @@ beforeEach(() => {
   History.prototype.replaceState.call(window.history, null, '', '/');
   vi.stubGlobal(
     'fetch',
-    vi.fn<typeof fetch>(() => Promise.resolve(new Response(JSON.stringify(games), { status: 200 }))),
+    vi.fn<typeof fetch>((input) =>
+      Promise.resolve(new Response((input instanceof Request ? input.url : input.toString()).endsWith('promos.json') ? promosJson : JSON.stringify(games), { status: 200 })),
+    ),
   );
 });
 
@@ -39,6 +42,9 @@ afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
 });
+
+/** Catalog cards: the grid is the only unlabelled list in <main> (the promos list is labelled). */
+const gridItems = () => screen.getByRole('main').querySelectorAll('ul[role="list"]:not([aria-label]) > li');
 
 async function advance(ms: number) {
   await act(() => vi.advanceTimersByTimeAsync(ms));
@@ -55,7 +61,7 @@ describe('feed isolation', () => {
 
     const feed = screen.getByRole('list', { name: 'Recent wins' });
     expect(within(feed).getAllByRole('listitem')).toHaveLength(SEED_COUNT);
-    expect(screen.getByRole('main').querySelectorAll('ul[role="list"] > li')).toHaveLength(games.length);
+    expect(gridItems()).toHaveLength(games.length);
     expect(gridCommits).toHaveBeenCalled(); // the probe is wired to the grid
 
     gridCommits.mockClear();
@@ -89,6 +95,47 @@ describe('command palette isolation', () => {
     expect(gridCommits).toHaveBeenCalledTimes(0);
 
     await user.keyboard('{Escape}');
+    expect(gridCommits).toHaveBeenCalledTimes(0);
+  });
+});
+
+describe('promos isolation', () => {
+  const promosRegion = () => screen.getByRole('region', { name: 'Promotions' });
+  const renderApp = () =>
+    render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+
+  it('promos loading and arriving cause 0 catalog grid commits (real <App/>, StrictMode)', async () => {
+    renderApp();
+    await advance(400); // catalog ready; promos (600 ms with random = 0) still loading
+    expect(gridItems()).toHaveLength(games.length);
+    expect(promosRegion().querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(gridCommits).toHaveBeenCalled();
+    gridCommits.mockClear();
+
+    await advance(200);
+    expect(within(promosRegion()).getAllByRole('link')).toHaveLength(5);
+    expect(gridCommits).toHaveBeenCalledTimes(0);
+  });
+
+  it('?mock=fail-promos: the catalog still loads and filters; Retry causes 0 grid commits', async () => {
+    History.prototype.replaceState.call(window.history, null, '', '/?mock=fail-promos');
+    renderApp();
+    await advance(1000);
+    expect(within(promosRegion()).getByRole('alert')).toBeDefined();
+    expect(gridItems()).toHaveLength(games.length);
+
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Game 12' } });
+    await advance(300);
+    expect(gridItems()).toHaveLength(1);
+
+    gridCommits.mockClear();
+    fireEvent.click(within(promosRegion()).getByRole('button', { name: 'Try again' }));
+    await advance(1000);
+    expect(within(promosRegion()).getByRole('alert')).toBeDefined(); // the flag is still in the URL
     expect(gridCommits).toHaveBeenCalledTimes(0);
   });
 });

@@ -18,6 +18,10 @@ describe('getMockFlags', () => {
     expect([...getMockFlags('?mock=empty-wallet')]).toEqual(['empty-wallet']);
   });
 
+  it('knows the promo flags', () => {
+    expect([...getMockFlags('?mock=fail-promos,empty-promos')].sort()).toEqual(['empty-promos', 'fail-promos']);
+  });
+
   it('drops unknown flags and junk', () => {
     expect([...getMockFlags('?mock=,nope,%E0,%20slow%20')]).toEqual(['slow']);
   });

@@ -1,4 +1,5 @@
 import { Catalog } from '../features/catalog/Catalog';
+import { Promos } from '../features/promos/Promos';
 import { useI18n } from '../i18n/LocaleProvider';
 import { FeedPanel } from './FeedPanel';
 import { Header } from './Header';
@@ -14,7 +15,7 @@ export function Layout() {
       <Header />
       <div className={styles.columns}>
         <main id="main" tabIndex={-1} className={styles.main}>
-          <Catalog />
+          <Catalog promos={<Promos />} />
         </main>
         <FeedPanel />
       </div>

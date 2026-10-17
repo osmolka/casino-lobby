@@ -15,3 +15,8 @@ export function filtersToReveal(current: Filters, games: readonly Game[], game: 
 export function filtersForProvider(current: Filters, slug: string): Filters {
   return { ...DEFAULT_FILTERS, prov: [slug], sort: current.sort };
 }
+
+/** Promo card → its catalog view (defaults + target, see promoTarget), keeping the current sort. */
+export function filtersForPromo(current: Filters, target: Filters): Filters {
+  return { ...target, sort: current.sort };
+}

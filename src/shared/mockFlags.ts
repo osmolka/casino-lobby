@@ -1,5 +1,5 @@
 // Failure injection for manual verification (PLAN §3.6). Works in dev and preview.
-export const MOCK_FLAGS = ['fail-catalog', 'fail-feed', 'fail-wallet', 'empty-feed', 'empty-wallet', 'slow'] as const;
+export const MOCK_FLAGS = ['fail-catalog', 'fail-feed', 'fail-wallet', 'empty-feed', 'empty-wallet', 'fail-promos', 'empty-promos', 'slow'] as const;
 export type MockFlag = (typeof MOCK_FLAGS)[number];
 
 export function getMockFlags(search: string): ReadonlySet<MockFlag> {

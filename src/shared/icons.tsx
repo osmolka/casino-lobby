@@ -107,3 +107,12 @@ export function SearchIcon(props: IconProps) {
     </svg>
   );
 }
+
+/** Points to inline-end in LTR; mirror it under [dir='rtl'] (PLAN §3.2). */
+export function ArrowForwardIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}

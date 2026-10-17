@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, type ReactNode } from 'react';
 import { useI18n } from '../../i18n/LocaleProvider';
 import { prefersReducedMotion } from '../../shared/useReducedMotion';
 import { CATALOG_ERROR_KEYS } from './api';
@@ -10,7 +10,15 @@ import { providerOptions, tagOptions } from './labels';
 import { filtersEqual } from './urlState';
 import styles from './Catalog.module.css';
 
-export function Catalog() {
+interface Props {
+  /**
+   * Rendered right after the h1 (heading order: h1 → promos h2). Pass an element created by the parent, so a
+   * catalog re-render reuses it as is and the slot's own state never re-renders the catalog.
+   */
+  promos?: ReactNode;
+}
+
+export function Catalog({ promos }: Props) {
   const { t } = useI18n();
   const { catalog, filters: catalogFilters, focus, focusDone } = useCatalogContext();
   const { filters, query, setQuery, update, reset } = catalogFilters;
@@ -53,6 +61,8 @@ export function Catalog() {
       <h1 id={headingId} ref={headingRef} tabIndex={-1} className={styles.heading}>
         {t('catalog.title')}
       </h1>
+
+      {promos}
 
       <FilterPanel
         filters={filters}

@@ -75,3 +75,22 @@ for (const scheme of ['light', 'dark'] as const) {
     });
   });
 }
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`axe, ${scheme}: promos loading, error and empty`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    const promos = page.getByRole('region', { name: 'Promotions' });
+
+    await page.goto('/?mock=slow');
+    await expect(promos.locator('[aria-busy="true"]')).toBeVisible();
+    expect(await axe(page), 'loading').toEqual([]);
+
+    await page.goto('/?mock=fail-promos');
+    await expect(promos.getByRole('alert')).toBeVisible();
+    expect(await axe(page), 'error').toEqual([]);
+
+    await page.goto('/?mock=empty-promos');
+    await expect(promos.getByRole('heading', { name: 'No promotions right now' })).toBeVisible();
+    expect(await axe(page), 'empty').toEqual([]);
+  });
+}
