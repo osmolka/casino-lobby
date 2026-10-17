@@ -162,13 +162,22 @@ for (const scheme of ['light', 'dark'] as const) {
   }
 }
 
-test('repeated navigations and reloads in the same tab keep the console clean', async ({ page, lobby }) => {
-  const steps = ['/', '/', 'reload', 'reload', '/?cat=slots&sort=rtp', '/?cat=slots&sort=rtp', 'reload', '/?mock=slow', '/?mock=fail-catalog', 'reload', '/'];
-  for (const step of steps) {
-    if (step === 'reload') await lobby.reload();
-    else await lobby.goto(step);
-    await lobby.dwell();
-    expect(lobby.problems, `after ${step}`).toEqual([]);
-  }
-  await expect(page.getByRole('heading', { level: 1, name: 'Games' })).toBeVisible();
-});
+// Split into parallel tests: each step dwells MIN_DWELL_MS for late warnings, so one long test would dominate the suite.
+const CLEAN_RUNS: [name: string, steps: string[]][] = [
+  ['home', ['/', '/', 'reload', 'reload']],
+  ['filtered', ['/?cat=slots&sort=rtp', '/?cat=slots&sort=rtp', 'reload', '/']],
+  ['catalog mocks', ['/?mock=slow', '/?mock=fail-catalog', 'reload']],
+  ['wallet mocks', ['/?mock=fail-wallet', '/?mock=empty-wallet', 'reload']],
+];
+
+for (const [name, steps] of CLEAN_RUNS) {
+  test(`console stays clean over repeated navigations and reloads in one tab (${name})`, async ({ page, lobby }) => {
+    for (const step of steps) {
+      if (step === 'reload') await lobby.reload();
+      else await lobby.goto(step);
+      await lobby.dwell();
+      expect(lobby.problems, `after ${step}`).toEqual([]);
+    }
+    await expect(page.getByRole('heading', { level: 1, name: 'Games' })).toBeVisible();
+  });
+}

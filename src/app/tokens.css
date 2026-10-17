@@ -13,6 +13,7 @@
   --success: #167a3c;
   --skeleton: #e3e6ee;
   --shadow: 0 1px 2px rgb(21 24 35 / 8%), 0 4px 12px rgb(21 24 35 / 6%);
+  --backdrop: rgb(21 24 35 / 55%);
 }
 
 :root[data-theme='dark'] {
@@ -28,6 +29,7 @@
   --success: #5fd38a;
   --skeleton: #262a37;
   --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 12px rgb(0 0 0 / 30%);
+  --backdrop: rgb(0 0 0 / 70%);
 }
 
 :root {

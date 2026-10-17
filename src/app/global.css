@@ -33,6 +33,12 @@
 
 html {
   text-size-adjust: 100%;
+  scrollbar-gutter: stable;
+}
+
+/* Page scroll lock while a modal dialog is open; the stable gutter avoids a layout shift. */
+:root:has(dialog:modal) {
+  overflow: hidden;
 }
 
 body {

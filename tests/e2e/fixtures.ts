@@ -1,6 +1,9 @@
 import { test as base, expect, type Page } from '@playwright/test';
 
-/** Chrome reports some warnings (e.g. unused preloads) only seconds after load: every page stays open >= 5 s. */
+/**
+ * Chrome reports some warnings (e.g. unused preloads) only seconds after load. Only the console-cleanliness
+ * tests wait that long (`lobby.dwell()`); every other test still fails on any problem seen while it ran.
+ */
 export const MIN_DWELL_MS = 5000;
 
 export interface Lobby {
@@ -26,8 +29,10 @@ function collect(page: Page, problems: string[]) {
   });
 }
 
+// `auto`: every test gets the console/network check, including tests that never touch `lobby`.
 export const test = base.extend<{ lobby: Lobby }>({
-  lobby: async ({ page }, provide) => {
+  lobby: [
+    async ({ page }, provide) => {
     const problems: string[] = [];
     collect(page, problems);
     let loadedAt = 0;
@@ -42,17 +47,16 @@ export const test = base.extend<{ lobby: Lobby }>({
       problems,
       dwell,
       goto: async (path) => {
-        await dwell();
         await page.goto(path);
       },
       reload: async () => {
-        await dwell();
         await page.reload();
       },
     });
-    await dwell();
     expect(problems, 'console/network problems').toEqual([]);
-  },
+    },
+    { auto: true },
+  ],
 });
 
 export { expect };

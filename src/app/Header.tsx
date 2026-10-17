@@ -1,6 +1,6 @@
+import { WalletWidget } from '../features/wallet/WalletWidget';
 import { useI18n } from '../i18n/LocaleProvider';
 import { LogoMark } from '../shared/icons';
-import { Skeleton } from '../shared/Skeleton';
 import styles from './Header.module.css';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeToggle } from './ThemeToggle';
@@ -15,9 +15,7 @@ export function Header() {
       </a>
       <div className={styles.controls} role="group" aria-label={t('header.controls')}>
         {/* Command palette trigger: added in phase 5. */}
-        <div className={styles.wallet} role="status" aria-busy="true" aria-label={t('wallet.loading')}>
-          <Skeleton inlineSize="7.5rem" blockSize="2.5rem" />
-        </div>
+        <WalletWidget />
         <ThemeToggle />
         <LanguageSwitcher />
       </div>

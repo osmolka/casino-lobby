@@ -50,3 +50,8 @@ export function translate(messages: object, locale: string, key: string, vars: V
   }
   return key;
 }
+
+/** Splits a template for node interpolation: even indices are text, odd indices are placeholder names. */
+export function splitPlaceholders(template: string): string[] {
+  return template.split(/\{(\w+)\}/);
+}

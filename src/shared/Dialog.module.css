@@ -1,0 +1,16 @@
+/* Modal dialogs are centered by the UA (margin: auto) and capped to the viewport minus a gutter. */
+.dialog {
+  inline-size: min(28rem, 100%);
+  max-block-size: calc(100dvb - 2 * var(--space-4));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow);
+  overscroll-behavior: contain;
+}
+
+.dialog::backdrop {
+  background: var(--backdrop);
+}

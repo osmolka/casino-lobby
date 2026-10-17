@@ -46,3 +46,36 @@ export function formatPercent(value: number, locale: string): string {
   }
   return nf.format(value);
 }
+
+const enteredFormats = new Map<string, Intl.NumberFormat>();
+const dateTimeFormats = new Map<string, Intl.DateTimeFormat>();
+const currencyNames = new Map<string, Intl.DisplayNames>();
+
+/** A normalized decimal string (e.g. '10.9') in currency format without padding: what the user entered. */
+export function formatEnteredAmount(normalized: string, currency: string, locale: string): string {
+  const key = `${locale}|${currency}`;
+  let nf = enteredFormats.get(key);
+  if (!nf) {
+    nf = new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    enteredFormats.set(key, nf);
+  }
+  return nf.format(normalized as Decimal);
+}
+
+export function formatDateTime(iso: string, locale: string): string {
+  let df = dateTimeFormats.get(locale);
+  if (!df) {
+    df = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+    dateTimeFormats.set(locale, df);
+  }
+  return df.format(new Date(iso));
+}
+
+export function currencyName(code: string, locale: string): string {
+  let names = currencyNames.get(locale);
+  if (!names) {
+    names = new Intl.DisplayNames(locale, { type: 'currency' });
+    currencyNames.set(locale, names);
+  }
+  return names.of(code) ?? code;
+}

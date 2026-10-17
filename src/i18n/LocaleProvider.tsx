@@ -1,13 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { storageSet } from '../shared/storage';
 import { DEFAULT_LOCALE, LOCALES, LOCALE_KEY, isLocaleCode, type Locale, type LocaleCode } from './locales';
-import { translate, type Vars } from './t';
+import { splitPlaceholders, translate, type Vars } from './t';
 import type { MessageKey } from './types';
 
 interface I18n {
   locale: Locale;
   setLocale: (code: LocaleCode) => void;
   t: (key: MessageKey, vars?: Vars) => string;
+  /** Like `t`, but placeholders are replaced with nodes (e.g. an amount in <bdi>). */
+  rich: (key: MessageKey, nodes: Record<string, ReactNode>) => ReactNode;
 }
 
 const I18nContext = createContext<I18n | null>(null);
@@ -38,6 +40,10 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       locale,
       setLocale,
       t: (key, vars) => translate(locale.messages, locale.code, key, vars),
+      rich: (key, nodes) =>
+        splitPlaceholders(translate(locale.messages, locale.code, key)).map((part, i) => (
+          <Fragment key={i}>{i % 2 === 1 ? (nodes[part] ?? `{${part}}`) : part}</Fragment>
+        )),
     }),
     [locale, setLocale],
   );

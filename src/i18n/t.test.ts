@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { translate } from './t';
+import { splitPlaceholders, translate } from './t';
 
 const messages = {
   a: { b: 'Hello, {name}!' },
@@ -41,5 +41,13 @@ describe('translate', () => {
   it('returns the key itself when it is missing or not a leaf', () => {
     expect(translate(messages, 'en', 'nope.nothing')).toBe('nope.nothing');
     expect(translate(messages, 'en', 'a')).toBe('a');
+  });
+});
+
+describe('splitPlaceholders', () => {
+  it('alternates text and placeholder names (odd indices are names)', () => {
+    expect(splitPlaceholders('Deposit of {amount} failed.')).toEqual(['Deposit of ', 'amount', ' failed.']);
+    expect(splitPlaceholders('{from} = {to}')).toEqual(['', 'from', ' = ', 'to', '']);
+    expect(splitPlaceholders('No placeholders')).toEqual(['No placeholders']);
   });
 });

@@ -14,6 +14,10 @@ describe('getMockFlags', () => {
     expect([...getMockFlags('?mock=slow&mock=empty-feed')].sort()).toEqual(['empty-feed', 'slow']);
   });
 
+  it('knows empty-wallet', () => {
+    expect([...getMockFlags('?mock=empty-wallet')]).toEqual(['empty-wallet']);
+  });
+
   it('drops unknown flags and junk', () => {
     expect([...getMockFlags('?mock=,nope,%E0,%20slow%20')]).toEqual(['slow']);
   });

@@ -20,6 +20,23 @@ if (typeof window.matchMedia !== 'function') {
   });
 }
 
+// jsdom has <dialog> but no showModal/close and no Esc → cancel. Emulates what browsers do.
+if (typeof HTMLDialogElement.prototype.showModal !== 'function') {
+  HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+    if (!this.hasAttribute('open')) return;
+    this.removeAttribute('open');
+    this.dispatchEvent(new Event('close'));
+  };
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || event.defaultPrevented) return;
+    const dialog = [...document.querySelectorAll('dialog[open]')].at(-1);
+    if (dialog?.dispatchEvent(new Event('cancel', { cancelable: true }))) (dialog as HTMLDialogElement).close();
+  });
+}
+
 afterEach(() => {
   cleanup();
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMoney, formatMoneyRange, formatPercent, minorToDecimal } from './format';
+import { currencyName, formatDateTime, formatEnteredAmount, formatMoney, formatMoneyRange, formatPercent, minorToDecimal } from './format';
 
 describe('minorToDecimal', () => {
   it('converts integer minor units to an exact decimal string', () => {
@@ -48,5 +48,26 @@ describe('formatPercent', () => {
   it('formats a percent value with up to two decimals', () => {
     expect(formatPercent(96.21, 'en')).toBe('96.21%');
     expect(formatPercent(97, 'en')).toBe('97%');
+  });
+});
+
+describe('formatEnteredAmount', () => {
+  it('shows a normalized amount as entered: no padding to 2 decimals', () => {
+    expect(formatEnteredAmount('10.9', 'USD', 'en')).toBe('$10.9');
+    expect(formatEnteredAmount('9.5', 'EUR', 'en')).toBe('€9.5');
+    expect(formatEnteredAmount('100', 'GBP', 'en')).toBe('£100');
+    expect(formatEnteredAmount('1234.56', 'EUR', 'en')).toBe('€1,234.56');
+  });
+});
+
+describe('formatDateTime', () => {
+  it('formats an ISO timestamp with the locale', () => {
+    expect(formatDateTime('2026-09-01T09:00:00.000Z', 'en')).toMatch(/Sep 1, 2026/);
+  });
+});
+
+describe('currencyName', () => {
+  it('uses Intl.DisplayNames', () => {
+    expect(currencyName('USD', 'en')).toBe('US Dollar');
   });
 });

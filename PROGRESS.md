@@ -9,7 +9,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 | 1 | Scaffold, themes, i18n, layout, fixture | done | phase 1 |
 | 2a | Catalog data, filters, URL state (no UI) | done | phase 2a |
 | 2b | Catalog UI and states | done | phase 2b |
-| 3 | Wallet and deposit | todo | |
+| 3 | Wallet and deposit | done | phase 3 |
 | 4 | Live feed | todo | |
 | 5 | Promos, command palette (H3), polish | todo | |
 | 6a | H4 accent, H1 Russian | todo | |
@@ -40,12 +40,24 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 - 2b — Sort is a native select in the always-visible toolbar; mobile "Filters (n)" counts cat + each provider + tag + q (not sort). Clear filters shows when filters ≠ defaults or the input is non-empty; focus → h1 after Clear/Retry.
 - 2b — Catalog.test uses `fireEvent` (kept). For later phases (dialogs, palette), verified: user-event + vitest fake timers needs `userEvent.setup({ advanceTimers: vi.advanceTimersByTime })` AND a `globalThis.jest = { advanceTimersByTime: vi.advanceTimersByTime }` shim — RTL's `asyncWrapper` advances its `setTimeout(0)` only when `jest` exists; `advanceTimers` alone hangs. `shouldAdvanceTime: true` also works but follows the wall clock.
 - 2b — E2E: `@playwright/test` 1.63.0 exact (approved), bundled Chromium (`npx playwright install chromium`). Specs in `tests/e2e/` (approved; PLAN §4 says `e2e/`), own `tsconfig.e2e.json`. Default target: build + preview on :4173 (webServer); `E2E_BASE_URL=<url>` targets a running dev server. Fixture `lobby` fails a test on any console error/warning, pageerror, HTTP ≥ 400 or failed request, and keeps every page open ≥ 5 s.
-- 2a — Search: q split on whitespace, every token must be a substring of lowercase `title providerName` (in `filterGames`; URL keeps q as typed, trimmed). `toLowerCase`, no accent folding / ru matching: catalog data is English, H1 is UI only.
+- 3 — Failure rule on the normalized amount (trailing zeros dropped): `10.90` → `10.9` fails (user-confirmed; PLAN rule wins over addition 5). Dialog preview shows the normalized amount; the rule is not mentioned in the UI.
+- 3 — Wallet: fixture (opening €500 + 4 past deposits, €695.25), `?mock=empty-wallet` (no storage read/write). `wallet:v1` stores confirmed only, validated on read (shape, rate-consistent amount, unique ids); corrupt → fixture. Rates fixed in EUR cents per 1.00 (USD 0.92, GBP 1.17), half-up. Limits 1–5000 in the chosen currency.
+- 3 — Confirm uses `aria-disabled` (not `disabled`) while in flight/offline: `disabled` drops focus to body. Guards: in-flight ref + idempotency key per attempt (provider returns the same promise for a repeated key; reducer ignores it).
+- 3 — Native `<dialog>` + showModal (`shared/Dialog.tsx`): Tab wrap, Esc via `cancel` and `close`, focus → trigger, else fallback (header Deposit), never body. Scroll lock via `:root:has(dialog:modal)` + `scrollbar-gutter: stable`. jsdom stub for showModal/close/Esc in `test/setup.ts`. New token `--backdrop`.
+- 3 — Wallet UI in the header: balance toggle → history panel (6 most recent), Deposit button (icon-only < 30rem). Failure after the dialog was closed → `role="alert"` notice in the widget. `i18n.rich()` interpolates nodes (amounts in `<bdi>`).
+- 3 — `@axe-core/playwright` 4.14.0 exact (§2 list). `tests/e2e/a11y.spec.ts` new (did not exist). E2E dwell is opt-in (`lobby.dwell()`), used only by the console-cleanliness tests (split in 4 parallel runs); fixture is `auto`, so every test checks the console. Suite: 31 tests, 29.5 s incl. build., every token must be a substring of lowercase `title providerName` (in `filterGames`; URL keeps q as typed, trimmed). `toLowerCase`, no accent folding / ru matching: catalog data is English, H1 is UI only.
 
 ## Open issues
 <!-- One line each: what, where, how to reproduce -->
 - `npm audit`: 8 high, dev-only (braces via stylelint → globby/fast-glob), no fix upstream; `npm audit --omit=dev` = 0.
+- axe `label-content-name-mismatch` on game cards (name = title + provider via aria-labelledby, phase 2b). Filtered in `a11y.spec.ts` (KNOWN). Fix or accept in phase 7.
 - Dev server shows unstyled content briefly (Vite injects CSS via JS in dev); theme attr is already correct. Preview/prod has no flash.
+
+## For README (assumptions)
+- Transactions appear in the wallet's own recent-transactions list, not the live feed.
+- Deposit fails when the normalized amount (trailing zeros dropped, `,` = `.`) ends with 9: `19`, `10.90` fail; `90`, `9.50` succeed.
+- Rates are fixed (USD 0.92, GBP 1.17 → EUR). Limits 1–5000 per deposit in the chosen currency.
+- Confirmed transactions persist in `localStorage` (`wallet:v1`); pending/failed never. Corrupt data → fixture history.
 
 ## For NOTES.md ("with a week")
 - Search: accent/diacritic folding (`normalize('NFD')`) and locale-aware matching.
@@ -55,4 +67,4 @@ Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 
 ## Next
 <!-- What the next session should start with -->
-Phase 3: wallet + deposit. `shared/format.ts` has `formatMoney(minor, currency, locale)` / `minorToDecimal`; reuse for balance and conversion preview.
+Phase 4: live feed. Reuse `useReducedMotion`, `useAnimatedNumber`, `?mock=fail-feed|empty-feed`; pause control (WCAG 2.2.2).
