@@ -1,33 +1,41 @@
 import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import { useI18n } from '../../i18n/LocaleProvider';
+import { prefersReducedMotion } from '../../shared/useReducedMotion';
 import { CATALOG_ERROR_KEYS } from './api';
+import { useCatalogContext } from './CatalogProvider';
 import { DEFAULT_FILTERS, selectGames } from './filters';
 import { FilterPanel } from './FilterPanel';
 import { GameGrid, GameGridSkeleton } from './GameGrid';
 import { providerOptions, tagOptions } from './labels';
-import { useCatalog } from './useCatalog';
-import { useCatalogFilters } from './useCatalogFilters';
 import { filtersEqual } from './urlState';
 import styles from './Catalog.module.css';
 
 export function Catalog() {
   const { t } = useI18n();
-  const catalog = useCatalog();
-  const { filters, query, setQuery, update, reset, sanitize } = useCatalogFilters();
+  const { catalog, filters: catalogFilters, focus, focusDone } = useCatalogContext();
+  const { filters, query, setQuery, update, reset } = catalogFilters;
   const headingRef = useRef<HTMLHeadingElement>(null);
   const headingId = useId();
 
   const games = catalog.status === 'ready' ? catalog.games : null;
   const failed = catalog.status === 'error';
 
-  useEffect(() => {
-    if (games) sanitize(games);
-  }, [games, sanitize]);
-
   const selected = useMemo(() => (games ? selectGames(games, filters) : []), [games, filters]);
   const providers = useMemo(() => (games ? providerOptions(games) : failed ? [] : null), [games, failed]);
   const tags = useMemo(() => (games ? tagOptions(games) : failed ? [] : null), [games, failed]);
   const isDefault = filtersEqual(filters, DEFAULT_FILTERS) && query === '';
+
+  // Focus requested by the command palette. Runs after this render's results are in the DOM, and after
+  // the palette dialog has returned focus to its trigger (effect cleanups run before effects in a commit).
+  useEffect(() => {
+    if (!focus) return;
+    const target = focus.target === 'heading' ? headingRef.current : document.getElementById(`game-${focus.id}`);
+    if (!target) return; // not rendered yet (catalog still loading): retried on the next render
+    target.focus({ preventScroll: true });
+    // block 'start' honors the card's scroll-margin-block-start (sticky header).
+    target.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    focusDone();
+  }, [focus, selected, focusDone]);
 
   // The triggering button disappears after these actions; keep focus on a stable element.
   const { retry } = catalog;

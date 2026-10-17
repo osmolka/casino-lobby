@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CatalogError, fetchCatalog, type CatalogErrorKind } from './api';
 import type { Game } from './types';
 
@@ -35,5 +35,5 @@ export function useCatalog(): CatalogResult {
     setAttempt((n) => n + 1);
   }, []);
 
-  return { ...state, retry };
+  return useMemo(() => ({ ...state, retry }), [state, retry]);
 }

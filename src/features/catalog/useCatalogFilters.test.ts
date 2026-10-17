@@ -279,6 +279,47 @@ describe('useCatalogFilters', () => {
     expect(pushSpy).toHaveBeenCalledTimes(1);
   });
 
+  describe('navigate (command palette)', () => {
+    it('replaces all filters in one push, cancels a pending query and syncs the input', () => {
+      const { result } = render('?cat=live&sort=rtp&mock=slow#game-x');
+      act(() => {
+        result.current.setQuery('typed');
+      });
+      act(() => {
+        result.current.navigate({ ...DEFAULT_FILTERS, q: 'Book of Dawn', sort: 'rtp' });
+      });
+      expect(result.current.filters).toEqual({ ...DEFAULT_FILTERS, q: 'Book of Dawn', sort: 'rtp' });
+      expect(result.current.query).toBe('Book of Dawn');
+      expect(search()).toBe('?q=Book%20of%20Dawn&sort=rtp&mock=slow');
+      expect(window.location.hash).toBe('');
+      expect(pushSpy).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+      });
+      expect(result.current.query).toBe('Book of Dawn');
+      expect(replaceSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        popTo('?cat=live&sort=rtp&mock=slow');
+      });
+      expect(result.current.filters).toEqual({ ...DEFAULT_FILTERS, cat: 'live', sort: 'rtp' });
+      expect(result.current.query).toBe('');
+    });
+
+    it('syncs the input even when the filters do not change (no history entry)', () => {
+      const { result } = render('?q=book');
+      act(() => {
+        result.current.setQuery('boo');
+      });
+      act(() => {
+        result.current.navigate({ ...DEFAULT_FILTERS, q: 'book' });
+      });
+      expect(result.current.query).toBe('book');
+      expect(pushSpy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('sanitize', () => {
     const catalog = [makeGame({ id: '1', provider: 'ember-games', tags: ['jackpot'] })];
 

@@ -1,0 +1,217 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  block-size: 2.5rem;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg-muted);
+}
+
+.trigger:hover {
+  background: var(--skeleton);
+  color: var(--fg);
+}
+
+.kbd {
+  padding-inline: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Narrow header: icon-only button; the text stays as its accessible name. */
+@media (width < 40rem) {
+  .trigger {
+    inline-size: 2.5rem;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .kbd {
+    display: none;
+  }
+
+  .triggerText {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* Top-aligned, wider than the default dialog. */
+.dialog {
+  inline-size: min(36rem, 100% - 2 * var(--space-4));
+  margin-block: min(12dvb, 6rem) auto;
+}
+
+.palette {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* long nowrap labels must not widen the dialog */
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  padding-inline-start: var(--space-4);
+  border-block-end: 1px solid var(--border);
+}
+
+.searchIcon {
+  flex: none;
+  color: var(--fg-muted);
+}
+
+.input {
+  flex: 1;
+  min-inline-size: 0;
+  block-size: 2.5rem;
+  padding-inline: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+
+.input::placeholder {
+  color: var(--fg-muted);
+  opacity: 1;
+}
+
+.close {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+
+.close:hover {
+  background: var(--skeleton);
+}
+
+.list {
+  max-block-size: min(60dvb, 28rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-2);
+}
+
+.list[hidden] {
+  display: none;
+}
+
+.group {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.group + .group {
+  margin-block-start: var(--space-2);
+}
+
+.groupLabel {
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  color: var(--fg-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.option {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.option[aria-selected='true'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.label {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  unicode-bidi: isolate;
+}
+
+/* Bold + underline, not color alone: readable on the active (accent) row too. */
+.label mark {
+  background: none;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.meta {
+  flex: none;
+  max-inline-size: 45%;
+  overflow: hidden;
+  color: var(--fg-muted);
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  unicode-bidi: isolate;
+}
+
+.option[aria-selected='true'] .meta {
+  color: inherit;
+}
+
+.loading {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  border-block-end: 1px solid var(--border);
+  color: var(--fg-muted);
+  font-size: 0.875rem;
+}
+
+.retry {
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.empty {
+  padding: var(--space-6);
+  color: var(--fg-muted);
+  text-align: center;
+  overflow-wrap: anywhere;
+}

@@ -10,7 +10,7 @@ interface Props {
   titleId: string;
   /** Focus target after closing when the trigger is gone (e.g. it was replaced). */
   fallbackFocus: () => HTMLElement | null;
-  className?: string;
+  className?: string | undefined;
   children: ReactNode;
 }
 

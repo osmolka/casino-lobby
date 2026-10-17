@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeGame } from '../features/catalog/testGames';
 import { SEED_COUNT } from '../features/feed/feedStore';
 import { MIN_DELAY_MS } from '../features/feed/generator';
+import { setupUser } from '../test/user';
 import { App } from './App';
 
 const { gridCommits } = vi.hoisted(() => ({ gridCommits: vi.fn<ProfilerOnRenderCallback>() }));
@@ -61,6 +62,33 @@ describe('feed isolation', () => {
     for (let tick = 0; tick < 10; tick++) await advance(MIN_DELAY_MS);
 
     expect(within(feed).getAllByRole('listitem')).toHaveLength(SEED_COUNT + 10);
+    expect(gridCommits).toHaveBeenCalledTimes(0);
+  });
+});
+
+describe('command palette isolation', () => {
+  it('opening the palette and typing cause 0 catalog grid commits (real <App/>, StrictMode)', async () => {
+    // Feed ticks keep running here; the test above shows they never commit the grid.
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const user = setupUser();
+    render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+    await advance(1000);
+    expect(gridCommits).toHaveBeenCalled();
+    gridCommits.mockClear();
+
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Search' }));
+    const input = screen.getByRole('combobox', { name: 'Search games, providers and actions' });
+    await user.keyboard('game 1{ArrowDown}{ArrowDown}{End}{Home}');
+    await user.clear(input);
+    await user.keyboard('xyz');
+    expect(screen.getByRole('dialog', { name: 'Search and commands' })).toBeDefined();
+    expect(gridCommits).toHaveBeenCalledTimes(0);
+
+    await user.keyboard('{Escape}');
     expect(gridCommits).toHaveBeenCalledTimes(0);
   });
 });

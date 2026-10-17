@@ -37,6 +37,13 @@ if (typeof HTMLDialogElement.prototype.showModal !== 'function') {
   });
 }
 
+// jsdom has no layout, so no scrollIntoView. A no-op that tests can spy on.
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = function scrollIntoView() {
+    // no layout in jsdom
+  };
+}
+
 afterEach(() => {
   cleanup();
 });

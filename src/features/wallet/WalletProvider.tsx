@@ -21,6 +21,10 @@ interface Wallet {
   balance: number;
   retry: () => void;
   deposit: (request: DepositRequest) => Promise<DepositResult>;
+  /** Opens the deposit dialog (command palette). No-op until the wallet UI is ready. */
+  openDeposit: () => void;
+  /** The ready wallet UI registers its dialog opener; returns the unregister function. */
+  registerDepositOpener: (open: () => void) => () => void;
 }
 
 const WalletContext = createContext<Wallet | null>(null);
@@ -31,6 +35,7 @@ export function WalletProvider({ children, api: injected }: { children: ReactNod
   const [attempt, setAttempt] = useState(0);
   const requests = useRef(new Map<string, Promise<DepositResult>>());
   const controllers = useRef(new Set<AbortController>());
+  const depositOpener = useRef<(() => void) | null>(null);
 
   // The request is aborted on unmount, so StrictMode's double mount loads once.
   useEffect(() => {
@@ -100,9 +105,28 @@ export function WalletProvider({ children, api: injected }: { children: ReactNod
     [api],
   );
 
+  const openDeposit = useCallback(() => {
+    depositOpener.current?.();
+  }, []);
+
+  const registerDepositOpener = useCallback((open: () => void) => {
+    depositOpener.current = open;
+    return () => {
+      if (depositOpener.current === open) depositOpener.current = null;
+    };
+  }, []);
+
   const value = useMemo<Wallet>(
-    () => ({ load: state.load, transactions: state.transactions, balance: selectBalance(state.transactions), retry, deposit }),
-    [state, retry, deposit],
+    () => ({
+      load: state.load,
+      transactions: state.transactions,
+      balance: selectBalance(state.transactions),
+      retry,
+      deposit,
+      openDeposit,
+      registerDepositOpener,
+    }),
+    [state, retry, deposit, openDeposit, registerDepositOpener],
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

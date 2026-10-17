@@ -17,6 +17,8 @@ export interface CatalogFilters {
   /** Discrete change (category, providers, tag, sort): pushState. Flushes a pending query into the same entry. */
   update: (patch: FiltersPatch) => void;
   reset: () => void;
+  /** Replaces every filter in one push and syncs the input (command palette); a pending query is dropped. */
+  navigate: (next: Filters) => void;
   /** Call once the catalog is loaded: drops unknown providers/tags via replaceState. */
   sanitize: (games: readonly Game[]) => void;
 }
@@ -93,6 +95,15 @@ export function useCatalogFilters(): CatalogFilters {
     apply(DEFAULT_FILTERS, 'push', '');
   }, [apply, cancelPending]);
 
+  const navigate = useCallback(
+    (next: Filters) => {
+      cancelPending();
+      const normalized = normalizeFilters(next);
+      apply(normalized, 'push', normalized.q);
+    },
+    [apply, cancelPending],
+  );
+
   const sanitize = useCallback(
     (games: readonly Game[]) => {
       gamesRef.current = games;
@@ -126,7 +137,7 @@ export function useCatalogFilters(): CatalogFilters {
   }, [cancelPending]);
 
   return useMemo(
-    () => ({ ...state, setQuery, update, reset, sanitize }),
-    [state, setQuery, update, reset, sanitize],
+    () => ({ ...state, setQuery, update, reset, navigate, sanitize }),
+    [state, setQuery, update, reset, navigate, sanitize],
   );
 }

@@ -30,6 +30,17 @@
   white-space: nowrap;
 }
 
+/* Narrow phones: the controls (search, balance, deposit, theme) keep one row; the logo link keeps its aria-label. */
+@media (width < 26rem) {
+  .header {
+    gap: var(--space-2);
+  }
+
+  .logoText {
+    display: none;
+  }
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;

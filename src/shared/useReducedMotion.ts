@@ -10,7 +10,9 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
-const getSnapshot = () => window.matchMedia(QUERY).matches;
+export const prefersReducedMotion = () => window.matchMedia(QUERY).matches;
+
+const getSnapshot = prefersReducedMotion;
 
 export function useReducedMotion(): boolean {
   return useSyncExternalStore(subscribe, getSnapshot);

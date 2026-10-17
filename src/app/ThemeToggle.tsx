@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n/LocaleProvider';
 import { MoonIcon, SunIcon } from '../shared/icons';
 import styles from './Header.module.css';
-import { useTheme } from './useTheme';
+import { useTheme } from './ThemeProvider';
 
 export function ThemeToggle() {
   const { t } = useI18n();

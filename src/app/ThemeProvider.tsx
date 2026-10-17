@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { DARK_QUERY, applyTheme, isTheme, readStoredTheme, resolveTheme, storeTheme, type Theme } from './theme';
+
+interface ThemeState {
+  theme: Theme;
+  toggle: () => void;
+}
+
+const ThemeContext = createContext<ThemeState | null>(null);
 
 /** The inline script in index.html has already applied the theme; start from what it chose. */
 function initialTheme(): Theme {
@@ -7,7 +14,8 @@ function initialTheme(): Theme {
   return isTheme(applied) ? applied : resolveTheme();
 }
 
-export function useTheme() {
+/** One theme state for the header toggle and the command palette. */
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(initialTheme);
 
   useEffect(() => {
@@ -32,5 +40,12 @@ export function useTheme() {
     setTheme(next);
   }, [theme]);
 
-  return { theme, toggle };
+  const value = useMemo(() => ({ theme, toggle }), [theme, toggle]);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
+export function useTheme(): ThemeState {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error('useTheme must be used inside <ThemeProvider>');
+  return ctx;
 }

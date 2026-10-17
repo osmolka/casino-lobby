@@ -1,3 +1,4 @@
+import { CommandPalette } from '../features/palette/CommandPalette';
 import { WalletWidget } from '../features/wallet/WalletWidget';
 import { useI18n } from '../i18n/LocaleProvider';
 import { LogoMark } from '../shared/icons';
@@ -14,7 +15,7 @@ export function Header() {
         <span className={styles.logoText}>{t('app.name')}</span>
       </a>
       <div className={styles.controls} role="group" aria-label={t('header.controls')}>
-        {/* Command palette trigger: added in phase 5. */}
+        <CommandPalette />
         <WalletWidget />
         <ThemeToggle />
         <LanguageSwitcher />

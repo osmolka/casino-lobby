@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { Catalog } from './Catalog';
+import { CatalogProvider } from './CatalogProvider';
 import { parseFilters } from './urlState';
 import { selectGames } from './filters';
 import { makeGame } from './testGames';
@@ -63,7 +64,9 @@ function renderCatalog(url = '', options: { strict?: boolean } = {}) {
   setUrl(url);
   const ui = (
     <LocaleProvider>
-      <Catalog />
+      <CatalogProvider>
+        <Catalog />
+      </CatalogProvider>
     </LocaleProvider>
   );
   const view = render(options.strict ? <StrictMode>{ui}</StrictMode> : ui);

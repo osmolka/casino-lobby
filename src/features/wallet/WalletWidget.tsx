@@ -52,7 +52,7 @@ interface Notice {
 
 function WalletReady() {
   const { t, rich, locale } = useI18n();
-  const { balance, transactions, deposit } = useWallet();
+  const { balance, transactions, deposit, registerDepositOpener } = useWallet();
   const shown = useAnimatedNumber(balance);
   const [panelOpen, setPanelOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -94,11 +94,12 @@ function WalletReady() {
     };
   }, [panelOpen]);
 
-  const openDeposit = () => {
+  const openDeposit = useCallback(() => {
     sessionRef.current += 1;
     setNotice(null);
     setDialogOpen(true);
-  };
+  }, []);
+  useEffect(() => registerDepositOpener(openDeposit), [registerDepositOpener, openDeposit]);
   const closeDeposit = useCallback(() => {
     setDialogOpen(false);
   }, []);

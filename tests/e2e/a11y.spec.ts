@@ -40,6 +40,22 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(await axe(page)).toEqual([]);
     });
 
+    test('command palette: default list, matches with an active option, no results', async ({ page }) => {
+      await page.keyboard.press('Control+k');
+      const palette = page.getByRole('dialog', { name: 'Search and commands' });
+      await expect(palette.getByRole('option').first()).toBeVisible();
+      expect(await axe(page), 'default list').toEqual([]);
+
+      await page.keyboard.type('ro');
+      await page.keyboard.press('ArrowDown');
+      await expect(palette.locator('mark').first()).toBeVisible();
+      expect(await axe(page), 'matches').toEqual([]);
+
+      await page.keyboard.type('qqq');
+      await expect(palette.getByRole('option')).toHaveCount(0);
+      expect(await axe(page), 'no results').toEqual([]);
+    });
+
     test('deposit dialog: preview, validation error, failure alert', async ({ page }) => {
       await page.getByRole('banner').getByRole('button', { name: 'Deposit', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'Deposit' });
