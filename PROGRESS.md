@@ -39,7 +39,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - 5a — `fuzzy.ts`: tiers exact 5000 > prefix 4000 > word prefix 3000 > substring 2000 > subsequence (1000 + fzf-like DP: word start +8, adjacent +4, gap −3 then −1/char; clamped < 2000). Query lowercased per UTF-16 unit (indices = text indices), spaces ignored in subsequence. Rank: score + action bonus 5, then shorter text, then input order.
 - 5a — Results: max 10; group order fixed actions → games → providers for every query (empty query = actions, 5 Trending games, providers), so groups never jump; keyboard order = DOM order. Actions: theme, language per other locale (none until ru), deposit (wallet ready), clear filters (only while filters active → focus h1).
 - 5a — Selection (user-confirmed): visible game → focus card; hidden → defaults + q=title, sort kept, one push, pending debounce dropped, input synced. Provider → defaults + prov=[slug], sort kept, one push, focus h1. Catalog runs the focus in an effect, i.e. after the Dialog cleanup returned focus to the trigger; `focus({preventScroll})` + `scrollIntoView({block:'start'})` (honors scroll-margin), `behavior: auto` under reduced motion.
-- 5a — Hotkey: `code === 'KeyK'` + Ctrl/Meta, no Alt/Shift, no auto-repeat; toggles; ignored while another dialog is open. Deposit action: palette closes and the deposit dialog opens in one commit (cleanups run first; never two `dialog[open]`). jsdom `scrollIntoView` no-op stub in `test/setup.ts`. Header < 26rem hides the logo text; at 320px the theme toggle wraps to a 2nd row (stable scrollbar gutter).
+- 5a — Hotkey: `code === 'KeyK'` + Ctrl/Meta, no Alt/Shift, no auto-repeat; toggles; ignored while another dialog is open. Deposit action: palette closes and the deposit dialog opens in one commit (cleanups run first; never two `dialog[open]`). jsdom `scrollIntoView` no-op stub in `test/setup.ts`. Header < 26rem hides the logo text; 360px = one row; 320px with a classic scrollbar = 2 rows (accepted, see NOTES).
 
 ## Open issues
 - `npm audit`: 8 high, dev-only (braces via stylelint → globby/fast-glob), no fix upstream; `npm audit --omit=dev` = 0.
@@ -58,6 +58,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - Search: accent/diacritic folding (`normalize('NFD')`) and locale-aware matching.
 - Feed: dedupe the concurrent `api/games.json` requests (shared in-flight promise with per-caller abort).
 - Feed: the two jsx-a11y disables on the wins list are deliberate (focusable scrollable region with pointer/focus handlers that only pause).
+- Header at 320px: `scrollbar-gutter: stable` (dialog scroll lock) reserves 15px with a classic scrollbar → 273px for 286px of logo + controls → theme toggle wraps. Overlay scrollbars (mobile emulation) → 288px, one row. Fix = ≥13px (padding + gap at < 22rem), not a one-liner.
 
 ## Bonus claim status (H1–H5: claimed / not claimed + one-line reason; filled in phases 6–7)
 
