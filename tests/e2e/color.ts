@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 
 export type Rgb = [number, number, number];
@@ -19,6 +21,42 @@ export function oklch([r, g, b]: Rgb) {
 }
 
 export const hex = (rgb: Rgb) => `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+
+/** 'rgb(1, 2, 3)', '#010203' or '#123' → [r, g, b]. */
+export function rgbOf(css: string): Rgb {
+  const short = /^#([0-9a-f]{3})$/i.exec(css.trim())?.[1];
+  const h = short ? short.replace(/./g, '$&$&') : /^#([0-9a-f]{6})$/i.exec(css.trim())?.[1];
+  if (h) return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as Rgb;
+  const [r = 0, g = 0, b = 0] = (css.match(/[\d.]+/g) ?? []).map(Number);
+  return [r, g, b];
+}
+
+const luminance = (rgb: Rgb) =>
+  rgb
+    .map((v) => {
+      const s = v / 255;
+      return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    })
+    .reduce((sum, v, i) => sum + v * ([0.2126, 0.7152, 0.0722][i] ?? 0), 0);
+
+/** WCAG 2.x contrast ratio. */
+export function contrast(a: Rgb, b: Rgb): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** The rules inside `@supports not (<condition>…) { … }` in tokens.css, unwrapped (to emulate a browser without it). */
+export function fallbackRules(condition: string): string {
+  const css = readFileSync(join(process.cwd(), 'src/app/tokens.css'), 'utf8');
+  const at = css.indexOf(`@supports not (${condition}`);
+  const open = css.indexOf('{', at);
+  let depth = 0;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === '{') depth += 1;
+    if (css[i] === '}' && --depth === 0) return css.slice(open + 1, i);
+  }
+  throw new Error(`no @supports not (${condition}…) block`);
+}
 
 /**
  * Forces :hover / :active on elements through one CDP session per page, like DevTools' state toggles.
@@ -51,16 +89,29 @@ export async function stateForcer(page: Page) {
   };
 }
 
+/** Rendered colors of an element's screenshot at the given pixel points (CSS px at device scale factor 1). */
+export async function samplePixels(page: Page, el: Locator, points: [x: number, y: number][]): Promise<Rgb[]> {
+  const png = (await el.screenshot({ animations: 'disabled' })).toString('base64');
+  return page.evaluate(
+    async ([data, at]) => {
+      const img = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob());
+      const canvas = new OffscreenCanvas(img.width, img.height);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('no 2d context');
+      ctx.drawImage(img, 0, 0);
+      const pixels = ctx.getImageData(0, 0, img.width, img.height).data;
+      return at.map(([x, y]) => {
+        const i = (y * img.width + x) * 4;
+        return [pixels[i] ?? 0, pixels[i + 1] ?? 0, pixels[i + 2] ?? 0] as [number, number, number];
+      });
+    },
+    [png, points] as const,
+  );
+}
+
 /** Rendered color 4px inside the inline-start edge at mid height (padding area, no text or icon). */
 export async function samplePixel(page: Page, el: Locator): Promise<Rgb> {
-  const png = (await el.screenshot({ animations: 'disabled' })).toString('base64');
-  return page.evaluate(async (data) => {
-    const img = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob());
-    const canvas = new OffscreenCanvas(img.width, img.height);
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('no 2d context');
-    ctx.drawImage(img, 0, 0);
-    const [r = 0, g = 0, b = 0] = ctx.getImageData(4, Math.floor(img.height / 2), 1, 1).data;
-    return [r, g, b] as [number, number, number];
-  }, png);
+  const box = await el.boundingBox();
+  const [rgb] = await samplePixels(page, el, [[4, Math.floor((box?.height ?? 0) / 2)]]);
+  return rgb ?? [0, 0, 0];
 }

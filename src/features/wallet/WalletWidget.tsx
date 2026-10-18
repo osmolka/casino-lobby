@@ -29,7 +29,7 @@ export function WalletWidget() {
     <div ref={slotRef} tabIndex={-1} className={styles.slot}>
       {wallet.load === 'loading' && (
         <div role="status" aria-busy="true" aria-label={t('wallet.loading')} className={styles.skeleton}>
-          <Skeleton inlineSize="7.5rem" blockSize="2.5rem" />
+          <Skeleton inlineSize="7.5rem" blockSize="var(--header-control-size)" />
         </div>
       )}
       {wallet.load === 'error' && (

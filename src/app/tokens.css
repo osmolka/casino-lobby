@@ -6,7 +6,8 @@
   --fg: #151823;
   --fg-muted: #535b6e;
   --border: #858da0;
-  --accent: #6b2fd6;
+  --accent-l: 0.44;
+  --accent-c: 0.19;
   --accent-fg: #fff;
   --focus: #1f4fd1;
   --danger: #b42318;
@@ -34,7 +35,8 @@
   --fg: #eef0f6;
   --fg-muted: #a6adbe;
   --border: #6c7487;
-  --accent: #b296ff;
+  --accent-l: 0.74;
+  --accent-c: 0.15;
   --accent-fg: #14111f;
   --focus: #ffc94d;
   --danger: #ff8a80;
@@ -63,6 +65,14 @@
   --promo-hue-shift: 40;
 
   /*
+   * H4 dynamic accent: one hue (settings slider, src/app/accent.ts; the boot script applies the stored one) with
+   * lightness and chroma fixed per theme. Out-of-gamut hues render clipped; tokens.test.ts checks every pair at
+   * every hue 0–359 after clipping, and tests/e2e/accent.spec.ts checks the rendered pixels.
+   */
+  --accent-h: 292;
+  --accent: oklch(var(--accent-l) var(--accent-c) var(--accent-h));
+
+  /*
    * Button hover/press families (global.css), derived from --accent so a new accent recolors them.
    * Accent buttons: lightness step only. Outline/neutral buttons and chips: a little accent in --surface.
    * Text contrast on each is checked in tokens.test.ts.
@@ -76,6 +86,10 @@
   --control-pad-inline: var(--space-2);
   --chevron-size: 1rem;
   --chevron-gap: var(--space-1);
+
+  /* Header controls (search, balance, deposit, theme, settings) and the gaps between them. */
+  --header-control-size: 2.5rem;
+  --header-gap: var(--space-2);
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', roboto, 'Helvetica Neue', arial, sans-serif;
 }
 
@@ -83,19 +97,40 @@
   --dir: -1;
 }
 
+/* Narrow phones: logo mark, search, balance, deposit, theme and settings keep one row at 360px (header.spec.ts). */
+@media (width < 26rem) {
+  :root {
+    --header-control-size: 2.25rem;
+    --header-gap: 0.375rem;
+    --control-pad-inline: 0.375rem;
+  }
+}
+
+/* No oklch() at all: the default hue as a fixed color (tokens.test.ts); the hue setting is hidden. */
+@supports not (color: oklch(0 0 0)) {
+  :root,
+  :root[data-theme='light'] {
+    --accent: #5a2fb0;
+  }
+
+  :root[data-theme='dark'] {
+    --accent: #ae97ff;
+  }
+}
+
 /*
  * Fallbacks for the button families. Without these an unsupported value makes var(--btn-hover) invalid at
  * computed-value time, the hover background becomes transparent, and white text on an accent button vanishes.
  * 1. No relative color syntax (oklch(from …)): mix toward black (light) or white (dark) in OKLCH. Hue kept,
- *    same lightness step as --accent-shift (−0.06 / +0.06, ×1.8 active), chroma a little lower.
+ *    same lightness step as --accent-shift (−0.06 / +0.06, ×1.8 active) at the theme's --accent-l, chroma a little lower.
  * 2. No color-mix either: plain tokens (no tint, readable text).
  * The percentages are checked in tokens.test.ts.
  */
 @supports not (color: oklch(from red l c h)) {
   :root,
   :root[data-theme='light'] {
-    --accent-hover: color-mix(in oklch, var(--accent) 88%, black);
-    --accent-active: color-mix(in oklch, var(--accent) 78%, black);
+    --accent-hover: color-mix(in oklch, var(--accent) 86%, black);
+    --accent-active: color-mix(in oklch, var(--accent) 75%, black);
   }
 
   :root[data-theme='dark'] {

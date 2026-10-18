@@ -14,3 +14,11 @@ export function storageSet(key: string, value: string): void {
     // Ignore: the choice just won't persist.
   }
 }
+
+export function storageRemove(key: string): void {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore: the old choice just stays stored.
+  }
+}

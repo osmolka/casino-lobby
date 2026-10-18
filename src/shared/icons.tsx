@@ -40,6 +40,17 @@ export function ChevronUpIcon(props: IconProps) {
   );
 }
 
+/** Two sliders: the settings menu (language, accent). */
+export function SettingsIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M20 7h-9M14 17H4M4 7h3M17 17h3" />
+      <circle cx="9" cy="7" r="2" />
+      <circle cx="15" cy="17" r="2" />
+    </svg>
+  );
+}
+
 export function ChevronDownIcon(props: IconProps) {
   return (
     <svg {...base} width={16} height={16} {...props}>

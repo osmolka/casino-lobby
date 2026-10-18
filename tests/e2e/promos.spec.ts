@@ -158,12 +158,15 @@ test('error and empty states are compact and offer Retry', async ({ page }) => {
   expect((await region(page).boundingBox())?.height).toBeLessThan(180);
 });
 
-test('360px: every visible button, chip and form control is at least 24×24 CSS px', async ({ page }) => {
+test('360px: every visible button, chip and form control (incl. the settings panel) is at least 24×24 CSS px', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await page.goto('/');
   await loaded(page);
   await expect(page.locator('main [aria-busy="true"]')).toHaveCount(0);
   await page.getByRole('button', { name: /^Filters/ }).click();
+  // Settings panel open too (a click on its toggle is inside it, so the filters stay expanded).
+  await page.getByRole('banner').getByRole('button', { name: 'Settings' }).click();
+  await expect(page.getByRole('slider', { name: 'Accent hue' })).toBeVisible();
   const { checked, small } = await page.evaluate(() => {
     const targets = [...document.querySelectorAll<HTMLElement>('button, select, input, [role="button"]')].map((el) => {
       // A checkbox's target is its whole label row.
@@ -178,7 +181,7 @@ test('360px: every visible button, chip and form control is at least 24×24 CSS 
       small: visible.filter((t) => t.w < 24 || t.h < 24).map((t) => `${t.label}: ${Math.round(t.w)}×${Math.round(t.h)}`),
     };
   });
-  expect(checked).toBeGreaterThan(20); // header, filters (expanded), sort, chips, checkboxes, feed bar
+  expect(checked).toBeGreaterThan(22); // header, settings (slider, Reset), filters (expanded), sort, chips, checkboxes, feed bar
   expect(small).toEqual([]);
 });
 

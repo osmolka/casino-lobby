@@ -4,7 +4,8 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 
 ## Status
 - done: 1 scaffold/themes/i18n/layout/fixture · 2a catalog data/filters/URL · 2b catalog UI · 3 wallet/deposit · 4 live feed · 5a fuzzy.ts + command palette (H3) · 5b promos, polish (commits `phase <id>: …`)
-- todo: 6a H4 accent, H1 Russian · 6b H2 PWA · 6c H5 jackpot (only if approved) · 7 QA, RTL, docs
+- in progress: **6a: H4 done, H1 next** (separate session: `/phase 6a` → H1 only)
+- todo: 6b H2 PWA · 6c H5 jackpot (only if approved) · 7 QA, RTL, docs
 
 ## Decisions and deviations from PLAN.md (phase — decision — reason)
 - 1 — Pinned TS 6.0.3 / ESLint 9.39.5 (not latest 7.x / 10.x) — typescript-eslint needs TS <6.1; jsx-a11y supports ESLint ≤9. React 18.3.1 per §2.
@@ -50,6 +51,10 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - fix — Dropdowns: every `<select>` goes through `shared/Select` (`appearance: none` + `ChevronDownIcon` at `inset-inline-end: calc(--control-pad-inline + 1px border)`, `pointer-events: none`). Tokens `--control-pad-inline` (0.5rem), `--chevron-size` (1rem), `--chevron-gap` (0.25rem) shared with the balance button; select `padding-inline-end` = pad + size + gap. Chevron = `--fg` (≥ 3:1 on bg/surface/skeleton, tokens.test). Native arrow sat 4px from the edge vs 12px on the balance button; now 12px on all.
 - e2e — `reuseExistingServer: false`: a busy :4173 (e.g. a running `start:pwa`) fails the run with "http://localhost:4173 is already used" instead of testing a stale build. `E2E_BASE_URL` targets a running server on purpose. SW (phase 6): every test gets a fresh non-persistent context, so no SW survives from earlier tests or runs; within one test an SW from the first load can control later navigations.
 
+- 6a H4 — `--accent: oklch(var(--accent-l) var(--accent-c) var(--accent-h))`, hue 292 default; light L 0.44 / C 0.19 (was #6b2fd6 ≈ 0.49/0.23: fails at hue 186, 3.66:1), dark 0.74 / 0.15. Default hue: light #6b2fd6 → #5a2fb0, dark #b296ff → #ae97ff. Chromium 153 clips out-of-gamut oklch per channel (= `oklchToHex`, pinned in contrast.test). tokens.test: every pair × hue 0–359 × 2 themes × 3 @supports branches, derived from the unclipped accent, clipped at the end; e2e `accent.spec.ts` paints all 360 hues (computed tokens with a sentinel hue, re-declared per row) and checks screenshot pixels. Fallback mix 86/75 % black (light). No `oklch()` → hex accents (default hue), hue control hidden. Dimmed Confirm opacity 0.6 → 0.7 (fill vs surface ≥ 3:1 at every hue; text exempt as inactive).
+- 6a H4 — Settings gear (`SettingsMenu`, disclosure): Language (shared `Select`, renders once ru exists) + hue slider 0–359 (360 ≡ 0) + Reset. Slider has local state only (value, aria-valuetext `292°`); writes `--accent-h` on <html> + `lobby.accent-hue` (boot script applies it before CSS). Focus: first control on open; Esc → gear; outside click on nothing focusable → gear (restored on `click`: Chromium moves focus to body on mousedown); focusable target keeps focus; focus leaving closes. `header.controls` label 'Settings' → 'Lobby controls' (gear is "Settings").
+- 6a H4 — Header at 360px (theme toggle stays one click, spec): measured before 26px spare (logo 28 + Search 40 + wallet 155 + theme 40, classic scrollbar), gear needs 48 → below 26rem `--header-control-size` 2.25rem, header padding 12px, `--header-gap` 6px, `--control-pad-inline` 0.375rem. After: fixture €695.25 one row (25px spare on a phone, 10px with a classic scrollbar); €10,695.25 (+24px) one row on a phone (3px spare), wraps the gear to a 2nd end-aligned row in a 360px desktop window (345px content). e2e `header.spec.ts`.
+
 ## Open issues
 - `npm audit`: 8 high, dev-only (braces via stylelint → globby/fast-glob), no fix upstream; `npm audit --omit=dev` = 0.
 - Dev server shows unstyled content briefly (Vite injects CSS via JS in dev); theme attr is already correct. Preview/prod has no flash.
@@ -74,8 +79,9 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - Polish leftovers (5b, timeboxed): provider checkbox rows and native selects have no hover style; game cards have no `:active`; focused headings (tabIndex −1) show the ring after keyboard use.
 
 ## Bonus claim status (H1–H5: claimed / not claimed + one-line reason; filled in phases 6–7)
+- H4: claimed — hue slider in Settings, persisted and applied before render; every hue 0–359 AA in both themes (tokens.test + rendered-pixel e2e), axe at 0/60/…/300.
 
 ## Next
-- Phase 6a (H4): accent tests must cover `--accent-hover` / `--accent-active` for every hue 0–359 in both themes, computed after the browser's gamut mapping (not from the raw oklch token), with text ≥ 4.5:1 and selected chip vs hover ≥ 3:1. Gamut clipping shifts hue and chroma most at yellow-green and cyan. Also the `@supports` fallbacks.
-- E2E time budget: ~60 s including build (now ~40 s). Keep tests parallel-safe (own context, no shared state) and waiting on concrete states, never fixed sleeps.
+- Phase 6a (H1): ru dictionary, plurals, `ru` in locales + boot script; the language select appears in the Settings panel (first control → gets focus on open; update accent.spec focus expectations). Check 360px with long Russian strings (header, chips, dialog, settings panel).
+- E2E time budget: ~60 s including build (now ~47 s). Keep tests parallel-safe (own context, no shared state) and waiting on concrete states, never fixed sleeps.
 - Phase 6b: on an offline reload the feed falls back to `catalog:v1` for titles, so catalog and feed agree. Consider one shared in-flight games request (cleared on failure) if it stays simple. Promos offline: precache `api/promos.json` in the SW or give promos a fallback (e.g. `promos:v1`), so catalog and promos agree offline.

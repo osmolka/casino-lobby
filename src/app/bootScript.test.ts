@@ -1,6 +1,7 @@
 import html from '../../index.html?raw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LOCALE_KEY } from '../i18n/locales';
+import { ACCENT_HUE_KEY } from './accent';
 import { THEME_KEY } from './theme';
 
 const script = /<script id="boot">([\s\S]*?)<\/script>/.exec(html)?.[1] ?? '';
@@ -35,6 +36,21 @@ describe('index.html boot script', () => {
   it('is present and uses the same storage keys as the app', () => {
     expect(script).toContain(`'${THEME_KEY}'`);
     expect(script).toContain(`'${LOCALE_KEY}'`);
+    expect(script).toContain(`'${ACCENT_HUE_KEY}'`);
+  });
+
+  it('applies a stored accent hue as --accent-h before CSS loads', () => {
+    mockSystemDark(false);
+    localStorage.setItem(ACCENT_HUE_KEY, '120');
+    runBoot();
+    expect(document.documentElement.style.getPropertyValue('--accent-h')).toBe('120');
+  });
+
+  it.each(['360', '-5', '1.5', 'red', '12;color:red'])('ignores an invalid stored hue %j (tokens.css default stays)', (value) => {
+    mockSystemDark(false);
+    localStorage.setItem(ACCENT_HUE_KEY, value);
+    runBoot();
+    expect(document.documentElement.style.getPropertyValue('--accent-h')).toBe('');
   });
 
   it('applies the stored theme before the app mounts', () => {

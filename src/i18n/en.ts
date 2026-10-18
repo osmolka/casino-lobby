@@ -5,7 +5,14 @@ export const en = {
     skipToContent: 'Skip to content',
   },
   header: {
-    controls: 'Settings',
+    controls: 'Lobby controls',
+  },
+  settings: {
+    open: 'Settings',
+    title: 'Settings',
+    accent: 'Accent hue',
+    accentValue: '{hue}°',
+    reset: 'Reset accent',
   },
   theme: {
     dark: 'Dark theme',

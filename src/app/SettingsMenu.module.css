@@ -1,0 +1,84 @@
+/* Not positioned: like the wallet popovers, the panel anchors to the sticky header. */
+.settings {
+  display: inline-flex;
+}
+
+.panel {
+  position: absolute;
+  inset-block-start: calc(100% + var(--space-2));
+  inset-inline-end: var(--space-4);
+  z-index: 20;
+  display: grid;
+  gap: var(--space-4);
+  inline-size: min(20rem, calc(100% - 2 * var(--space-4)));
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+/* Language: label (visually hidden) + the shared Select, full width. */
+.field:empty {
+  display: none;
+}
+
+.field select {
+  inline-size: 100%;
+}
+
+.hue {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.hueHead {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-weight: 600;
+}
+
+.hueValue {
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: isolate;
+}
+
+/* Native range: the thumb and filled track show the current accent. 24px tall target. */
+.slider {
+  inline-size: 100%;
+  block-size: 1.5rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.reset {
+  justify-self: start;
+  min-block-size: 2.5rem;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-weight: 600;
+}
+
+/* Without oklch() the accent is a fixed color (tokens.css), so the hue setting would do nothing. */
+@supports not (color: oklch(0 0 0)) {
+  .hue {
+    display: none;
+  }
+}

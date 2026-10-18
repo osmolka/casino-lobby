@@ -1,8 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import type { Locator, Page } from '@playwright/test';
-import { oklch, samplePixel, stateForcer, type Rgb } from './color';
+import { contrast, fallbackRules, oklch, rgbOf, samplePixel, stateForcer } from './color';
 import { expect, test } from './fixtures';
 
 type Family = 'accent' | 'neutral';
@@ -41,22 +39,6 @@ function tokenColor(page: Page, token: string) {
     return value;
   }, token);
 }
-
-const rgbOf = (css: string): Rgb => {
-  const [r = 0, g = 0, b = 0] = (css.match(/[\d.]+/g) ?? []).map(Number);
-  return [r, g, b];
-};
-const luminance = (rgb: Rgb) =>
-  rgb
-    .map((v) => {
-      const s = v / 255;
-      return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-    })
-    .reduce((sum, v, i) => sum + v * ([0.2126, 0.7152, 0.0722][i] ?? 0), 0);
-const contrast = (a: Rgb, b: Rgb) => {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
-  return (hi + 0.05) / (lo + 0.05);
-};
 
 type Forcer = Awaited<ReturnType<typeof stateForcer>>;
 
@@ -107,19 +89,6 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
-/** The rules inside `@supports not (<condition>…) { … }` in tokens.css, unwrapped. */
-function fallbackRules(condition: string): string {
-  const css = readFileSync(join(process.cwd(), 'src/app/tokens.css'), 'utf8');
-  const at = css.indexOf(`@supports not (${condition}`);
-  const open = css.indexOf('{', at);
-  let depth = 0;
-  for (let i = open; i < css.length; i++) {
-    if (css[i] === '{') depth += 1;
-    if (css[i] === '}' && --depth === 0) return css.slice(open + 1, i);
-  }
-  throw new Error(`no @supports not (${condition}…) block`);
-}
-
 // Chromium supports both features, so the @supports branches never apply here. Injecting their rules
 // unwrapped shows what a browser without the feature gets: hover still works and text stays readable.
 for (const scheme of ['light', 'dark'] as const) {
@@ -137,8 +106,8 @@ for (const scheme of ['light', 'dark'] as const) {
     expect(await declared('--accent-hover')).toMatch(/^oklch\(from /);
 
     const noRelative = await page.addStyleTag({ content: fallbackRules('color: oklch(from') });
-    // Computed custom properties have var() substituted: color-mix(in oklch, #6b2fd6 88%, black).
-    expect(await declared('--accent-hover')).toMatch(/^color-mix\(in oklch, #[0-9a-f]{6} \d+%, (black|white)\)$/);
+    // Computed custom properties have var() substituted: color-mix(in oklch, oklch(0.44 0.19 292) 86%, black).
+    expect(await declared('--accent-hover')).toMatch(/^color-mix\(in oklch, oklch\([\d. ]+\) \d+%, (black|white)\)$/);
     expect(await declared('--accent-active')).toMatch(/^color-mix\(/);
     for (const target of accentTargets) await checkTarget(page, forcer, target);
     await noRelative.evaluate((style) => {

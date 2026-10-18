@@ -81,18 +81,30 @@ export function oklchToHex({ l: L, c, h }: Oklch): string {
 
 const POWERLESS = 1e-4;
 
-/** `color-mix(in oklch, a <weight>, b)`: weight in 0–1; shorter hue arc; an achromatic side takes the other's hue. */
-export function mixOklch(a: string, weight: number, b: string): string {
-  const x = hexToOklch(a);
-  const y = hexToOklch(b);
+/**
+ * `color-mix(in oklch, a <weight>, b)` on OKLCH values as CSS resolves them (an out-of-gamut side is not clipped
+ * first): weight in 0–1; shorter hue arc; an achromatic side takes the other's hue.
+ */
+export function mixLch(x: Oklch, weight: number, y: Oklch): Oklch {
   const hx = x.c < POWERLESS ? y.h : x.h;
   const hy = y.c < POWERLESS ? x.h : y.h;
   const delta = ((((hy - hx) % 360) + 540) % 360) - 180;
-  return oklchToHex({
+  return {
     l: x.l * weight + y.l * (1 - weight),
     c: x.c * weight + y.c * (1 - weight),
     h: (hx + delta * (1 - weight) + 360) % 360,
-  });
+  };
+}
+
+/** `color-mix(in oklch, a <weight>, b)` of two hex colors, rendered. */
+export function mixOklch(a: string, weight: number, b: string): string {
+  return oklchToHex(mixLch(hexToOklch(a), weight, hexToOklch(b)));
+}
+
+/** `fg` painted at `opacity` over `bg` (e.g. a dimmed button), 8-bit sRGB. */
+export function overlay(fg: string, opacity: number, bg: string): string {
+  const [f, b] = [parseHex(fg) ?? [0, 0, 0], parseHex(bg) ?? [0, 0, 0]];
+  return `#${f.map((c, i) => Math.round(c * opacity + (b[i] ?? 0) * (1 - opacity)).toString(16).padStart(2, '0')).join('')}`;
 }
 
 /** `oklch(from <hex> calc(l + shift) c h)`. */

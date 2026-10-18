@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contrastRatio, hexToOklch, hslToHex, mixOklch, oklchToHex, parseHex, shiftLightness } from './contrast';
+import { contrastRatio, hexToOklch, hslToHex, mixLch, mixOklch, oklchToHex, overlay, parseHex, shiftLightness } from './contrast';
 
 describe('contrast', () => {
   it('parses 3- and 6-digit hex', () => {
@@ -42,6 +42,29 @@ describe('oklch helpers', () => {
     expect(mixOklch('#6b2fd6', 1, '#ffffff')).toBe('#6b2fd6');
     expect(mixOklch('#6b2fd6', 0, '#ffffff')).toBe('#ffffff');
     expect(hexToOklch(mixOklch('#6b2fd6', 0.5, '#ffffff')).h).toBeCloseTo(hexToOklch('#6b2fd6').h, 0);
+  });
+
+  it('oklchToHex clips out-of-gamut colors per channel, like Chromium renders them', () => {
+    // Pixels read from Chromium 153 screenshots of `background: oklch(…)`.
+    expect(oklchToHex({ l: 0.49, c: 0.22, h: 120 })).toBe('#546d00');
+    expect(oklchToHex({ l: 0.49, c: 0.22, h: 195 })).toBe('#007f87');
+    expect(oklchToHex({ l: 0.73, c: 0.15, h: 110 })).toBe('#aeaf23');
+    expect(oklchToHex({ l: 0.43, c: 0.22, h: 30 })).toBe('#a80000');
+  });
+
+  it('mixLch mixes unclipped OKLCH values (the origin is not gamut-mapped first)', () => {
+    const accent = { l: 0.44, c: 0.19, h: 186 }; // out of sRGB
+    const mixed = mixLch(accent, 0.12, hexToOklch('#ffffff'));
+    expect(mixed.l).toBeCloseTo(0.44 * 0.12 + 0.88, 3);
+    expect(mixed.c).toBeCloseTo(0.19 * 0.12, 3);
+    expect(mixed.h).toBeCloseTo(186, 3); // white is achromatic: takes the accent's hue
+    expect(mixLch(accent, 0.5, { l: 0.5, c: 0.1, h: 350 }).h).toBeCloseTo(268, 3); // shorter arc: +164°, halfway
+  });
+
+  it('overlay composites a color at an opacity over a background (8-bit sRGB)', () => {
+    expect(overlay('#000000', 0.5, '#ffffff')).toBe('#808080');
+    expect(overlay('#5a2fb0', 1, '#ffffff')).toBe('#5a2fb0');
+    expect(overlay('#5a2fb0', 0, '#1a1d27')).toBe('#1a1d27');
   });
 
   it('shiftLightness changes only lightness', () => {

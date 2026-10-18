@@ -3,7 +3,7 @@ import { WalletWidget } from '../features/wallet/WalletWidget';
 import { useI18n } from '../i18n/LocaleProvider';
 import { LogoMark } from '../shared/icons';
 import styles from './Header.module.css';
-import { LanguageSwitcher } from './LanguageSwitcher';
+import { SettingsMenu } from './SettingsMenu';
 import { ThemeToggle } from './ThemeToggle';
 
 export function Header() {
@@ -18,7 +18,7 @@ export function Header() {
         <CommandPalette />
         <WalletWidget />
         <ThemeToggle />
-        <LanguageSwitcher />
+        <SettingsMenu />
       </div>
     </header>
   );

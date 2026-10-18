@@ -139,3 +139,26 @@ describe('promos isolation', () => {
     expect(gridCommits).toHaveBeenCalledTimes(0);
   });
 });
+
+describe('accent isolation', () => {
+  it('opening settings, moving the hue slider and Reset cause 0 catalog grid commits (real <App/>, StrictMode)', async () => {
+    const user = setupUser();
+    render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+    await advance(1000);
+    expect(gridItems()).toHaveLength(games.length);
+    expect(gridCommits).toHaveBeenCalled();
+    gridCommits.mockClear();
+
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Settings' }));
+    const slider = screen.getByRole('slider', { name: 'Accent hue' });
+    for (const hue of ['0', '60', '180', '300']) fireEvent.change(slider, { target: { value: hue } });
+    expect(document.documentElement.style.getPropertyValue('--accent-h')).toBe('300');
+    await user.click(screen.getByRole('button', { name: 'Reset accent' }));
+    expect(document.documentElement.style.getPropertyValue('--accent-h')).toBe('');
+    expect(gridCommits).toHaveBeenCalledTimes(0);
+  });
+});

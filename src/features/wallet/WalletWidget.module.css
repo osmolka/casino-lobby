@@ -47,7 +47,7 @@
 .wallet {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--header-gap);
   min-inline-size: 0;
 }
 
@@ -55,7 +55,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--chevron-gap);
-  min-block-size: 2.5rem;
+  min-block-size: var(--header-control-size);
   padding-inline: var(--space-3) var(--control-pad-inline);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -87,8 +87,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  min-block-size: 2.5rem;
-  min-inline-size: 2.5rem;
+  min-block-size: var(--header-control-size);
+  min-inline-size: var(--header-control-size);
   justify-content: center;
   padding-inline: var(--space-2) var(--space-3);
   border: 1px solid var(--accent);

@@ -5,15 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <title>Lucky Lobby</title>
-    <!-- Runs before any CSS: sets theme, lang and dir so there is no flash. Keys: src/app/theme.ts, src/i18n/locales.ts. -->
+    <!-- Runs before any CSS: sets theme, lang and dir so there is no flash. Keys: src/app/theme.ts, src/i18n/locales.ts, src/app/accent.ts. -->
     <script id="boot">
       (function () {
         var root = document.documentElement;
         var theme = null;
         var locale = null;
+        var hue = null;
         try {
           theme = localStorage.getItem('lobby.theme');
           locale = localStorage.getItem('lobby.locale');
+          hue = localStorage.getItem('lobby.accent-hue');
         } catch (e) {}
         if (theme !== 'light' && theme !== 'dark') {
           theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -24,6 +26,8 @@
         root.style.colorScheme = theme;
         root.lang = locale;
         root.dir = locales[locale];
+        // Accent hue: a whole degree 0–359 (same rule as parseHue); otherwise tokens.css keeps its default.
+        if (/^(0|[1-9][0-9]{0,2})$/.test(hue) && Number(hue) < 360) root.style.setProperty('--accent-h', hue);
       })();
     </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
