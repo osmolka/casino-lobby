@@ -272,4 +272,17 @@ describe('fetchCatalog offline fallback (catalog:v1)', () => {
     const result = await settled;
     expect((result as { error: DOMException }).error.name).toBe('AbortError');
   });
+
+  it('rethrows an abort during the fetch instead of falling back', async () => {
+    saveCatalog();
+    const controller = new AbortController();
+    fetchMock.mockImplementationOnce(() => {
+      controller.abort();
+      return Promise.reject(new DOMException('aborted', 'AbortError'));
+    });
+    const { settled } = start({ signal: controller.signal });
+    await vi.advanceTimersByTimeAsync(400);
+    const result = await settled;
+    expect((result as { error: DOMException }).error.name).toBe('AbortError');
+  });
 });

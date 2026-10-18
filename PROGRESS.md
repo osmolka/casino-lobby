@@ -3,8 +3,8 @@
 Keep this file under ~60 lines. Summarize; do not log every step. Update at the end of each phase. Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 
 ## Status
-- done: 1 scaffold/themes/i18n/layout/fixture · 2a catalog data/filters/URL · 2b catalog UI · 3 wallet/deposit · 4 live feed · 5a fuzzy.ts + command palette (H3) · 5b promos, polish · 6a H4 accent + H1 Russian · 6b H2 PWA (commits `phase <id>: …`)
-- todo: 6c H5 jackpot (only if approved) · 7 QA, RTL, docs
+- done: 1 scaffold/themes/i18n/layout/fixture · 2a catalog data/filters/URL · 2b catalog UI · 3 wallet/deposit · 4 live feed · 5a fuzzy.ts + command palette (H3) · 5b promos, polish · 6a H4 accent + H1 Russian · 6b H2 PWA · 7 QA, README, NOTES, proof (commits `phase <id>: …`)
+- dropped: 6c H5 jackpot (user, phase 7)
 
 ## Decisions and deviations from PLAN.md (phase — decision — reason)
 - 1 — Pinned TS 6.0.3 / ESLint 9.39.5 (not latest 7.x / 10.x) — typescript-eslint needs TS <6.1; jsx-a11y supports ESLint ≤9. React 18.3.1 per §2.
@@ -100,7 +100,11 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - H1: claimed — complete ru dictionary (type-checked, copy-paste guard), Russian plurals, switcher in Settings + palette action, persisted, lang/title applied; 360px layout checked in ru.
 - H2: claimed — installable (CDP: no manifest or installability errors), offline shell from precache, catalog from catalog:v1 with a cause-worded banner, auto-refetch on online; all 4 runbook steps are e2e tests (`pwa.spec.ts`).
 - H4: claimed — hue slider in Settings, persisted and applied before render; every hue 0–359 AA in both themes (tokens.test + rendered-pixel e2e), axe at 0/60/…/300.
+- H5: not claimed — dropped (user); README: the rAF approach is shown in the balance animation. H6–H8: not claimed, README says what I would do.
+- RTL: not claimed (user, phase 7) — no complete `ar` translation; README uses the PLAN §7.2 sentence.
+
+- 7 — README (≤ ~70 rendered lines, table with "how to see it" + covering test per spec item), NOTES.md (riskiest line `api.ts:151` with two mutations run), `proof/palette.png` + `proof/offline.png` (1440×900 dark) from `scripts/proof.ts` (Playwright chromium, no new dependency, runs against `start:pwa`). Added api.test "rethrows an abort during the fetch instead of falling back" (the old abort test aborted during the delay only). "For README" / "For NOTES.md" lists above are now in those files.
 
 ## Next
-- E2E time budget: ~75 s including build (6b adds offline checks; now ~48 s, 98 tests). Keep tests parallel-safe (own context, no shared state) and waiting on concrete states, never fixed sleeps.
-- Shared in-flight games request (catalog + feed) still not done: two requests per load (NOTES item stands).
+- Submission state. Manual §8 checks by the user (keyboard pass, reload persistence, mocks, hidden tab, dev console, H2 runbook, ru at 360 px, momentum on a phone).
+- Shared in-flight games request (catalog + feed) still not done: two requests per load (NOTES item).
