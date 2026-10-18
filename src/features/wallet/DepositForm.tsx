@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { useI18n } from '../../i18n/LocaleProvider';
 import type { MessageKey } from '../../i18n/types';
-import { currencyName, formatEnteredAmount, formatMoney } from '../../shared/format';
+import { currencyName, formatMoney } from '../../shared/format';
 import { Select } from '../../shared/Select';
 import { CloseIcon } from '../../shared/icons';
 import { useOnline } from '../../shared/useOnline';
@@ -37,7 +37,7 @@ export function DepositForm({ titleId, onConfirm, onClose }: Props) {
   const [currency, setCurrency] = useState<Currency>(WALLET_CURRENCY);
   const [showErrors, setShowErrors] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  /** The entered amount of the last failed attempt, formatted. */
+  /** The amount of the last failed attempt, formatted from minor units. */
   const [failure, setFailure] = useState<string | null>(null);
   /** Idempotency key of the current attempt; '' = a new one is created on submit. */
   const keyRef = useRef('');
@@ -87,13 +87,13 @@ export function DepositForm({ titleId, onConfirm, onClose }: Props) {
     inFlightRef.current = true;
     setSubmitting(true);
     setFailure(null);
-    const result = await onConfirm({ key: keyRef.current, normalized: parsed.normalized, source: { amount: parsed.minor, currency } });
+    const result = await onConfirm({ key: keyRef.current, entered: parsed.entered, source: { amount: parsed.minor, currency } });
     if (!mountedRef.current) return;
     inFlightRef.current = false;
     setSubmitting(false);
     if (result === 'failed') {
       keyRef.current = '';
-      setFailure(formatEnteredAmount(parsed.normalized, currency, code));
+      setFailure(formatMoney(parsed.minor, currency, code));
     }
   };
 
@@ -171,9 +171,7 @@ export function DepositForm({ titleId, onConfirm, onClose }: Props) {
           <dl className={styles.preview}>
             <div className={styles.previewRow}>
               <dt>{t('wallet.dialog.youDeposit')}</dt>
-              <dd>
-                <bdi>{formatEnteredAmount(parsed.normalized, currency, code)}</bdi>
-              </dd>
+              <dd>{money(parsed.minor, currency)}</dd>
             </div>
             {currency !== WALLET_CURRENCY && (
               <div className={styles.previewRow}>

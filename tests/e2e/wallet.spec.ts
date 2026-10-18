@@ -52,7 +52,7 @@ test('deposit 100: optimistic pending, balance animates up, confirmed, focus bac
   await expect(balance(page)).toHaveAccessibleName('Balance: €695.25');
   await expandPanel(page); // before the dialog: a modal dialog makes the page inert
   await openDeposit(page, '100');
-  await expect(dialog(page).locator('dl')).toHaveText('You deposit€100You receive€100.00');
+  await expect(dialog(page).locator('dl')).toHaveText('You deposit€100.00You receive€100.00');
 
   const sampling = sampleBalance(page, 1000);
   await confirm(page).click();
@@ -84,7 +84,7 @@ test('deposit 109: alert in the dialog, Failed in the list, balance rolled back'
   await openDeposit(page, '109');
   await confirm(page).click();
   await expect(rows(page).first()).toContainText('Pending');
-  await expect(dialog(page).getByRole('alert')).toHaveText('The deposit of €109 failed. Your balance was not changed.');
+  await expect(dialog(page).getByRole('alert')).toHaveText('The deposit of €109.00 failed. Your balance was not changed.');
   await expect(rows(page).first()).toContainText('€109.00');
   await expect(rows(page).first()).toContainText('Failed');
   await expect(rows(page)).toHaveCount(6);
@@ -121,7 +121,7 @@ test('Esc while a failing deposit is in flight: dialog closes, failure is announ
   await expect(dialog(page)).toBeHidden();
   await expect(depositButton(page)).toBeFocused();
   const alert = header(page).getByRole('alert');
-  await expect(alert).toContainText('Deposit of €19 failed. Your balance was not changed.');
+  await expect(alert).toContainText('Deposit of €19.00 failed. Your balance was not changed.');
   await expect(balance(page)).toHaveAccessibleName('Balance: €695.25');
   await expandPanel(page);
   await expect(rows(page).first()).toContainText('Failed');

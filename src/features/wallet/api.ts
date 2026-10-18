@@ -81,8 +81,8 @@ export interface WalletApi {
   persists: boolean;
   /** Rejects with WalletError, or with the signal's AbortError when aborted. */
   fetchWallet: (signal: AbortSignal) => Promise<Transaction[]>;
-  /** The "server". Rejects with WalletError when the normalized amount ends with 9 (README). */
-  submitDeposit: (normalized: string, signal: AbortSignal) => Promise<void>;
+  /** The "server". Rejects with WalletError when the last digit of the entered text is 9 (README). */
+  submitDeposit: (entered: string, signal: AbortSignal) => Promise<void>;
 }
 
 export interface WalletApiOptions {
@@ -106,9 +106,9 @@ export function createWalletApi(options: WalletApiOptions = {}): WalletApi {
       if (empty) return [];
       return readStoredTransactions() ?? [...FIXTURE_TRANSACTIONS];
     },
-    submitDeposit: async (normalized, signal) => {
+    submitDeposit: async (entered, signal) => {
       await delay(DEPOSIT_DELAY_MS, signal);
-      if (willFail(normalized)) throw new WalletError('deposit');
+      if (willFail(entered)) throw new WalletError('deposit');
     },
   };
 }

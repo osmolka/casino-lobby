@@ -5,7 +5,7 @@ export const MAX_DEPOSIT = 500_000;
 export type AmountError = 'required' | 'invalid' | 'precision' | 'zero' | 'min' | 'max';
 
 export type ParsedAmount =
-  | { ok: true; /** Without insignificant zeros, `.` as separator: '09' → '9', '9,50' → '9.5'. */ normalized: string; minor: number }
+  | { ok: true; /** The trimmed text as typed (the failure rule reads it); never shown in the UI. */ entered: string; minor: number }
   | { ok: false; error: AmountError };
 
 // Digits with an optional single `.` or `,` separator. No signs, exponents or grouping.
@@ -30,10 +30,14 @@ export function parseAmount(input: string): ParsedAmount {
   if (minor === 0) return { ok: false, error: 'zero' };
   if (minor < MIN_DEPOSIT) return { ok: false, error: 'min' };
   if (minor > MAX_DEPOSIT) return { ok: false, error: 'max' };
-  return { ok: true, normalized: frac ? `${int}.${frac}` : int, minor };
+  return { ok: true, entered: text, minor };
 }
 
-/** The deterministic failure rule (README): the normalized amount ends with the digit 9. */
-export function willFail(normalized: string): boolean {
-  return normalized.endsWith('9');
+/**
+ * The deterministic failure rule (README): the last digit of the entered text is 9. Trimmed; `,` and `.` alike;
+ * no zero stripping, so 10.9 fails and 10.90 succeeds. A trailing separator is skipped: 19. fails as 19.
+ * Only ever applied to text parseAmount accepted (ASCII digits).
+ */
+export function willFail(entered: string): boolean {
+  return /9[.,]?$/.test(entered.trim());
 }

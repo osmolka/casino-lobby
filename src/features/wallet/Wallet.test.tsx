@@ -114,7 +114,7 @@ describe('wallet: deposit', () => {
     expect(rows()[0]).toMatch(/€100\.00.*Confirmed/);
     expect(balance().textContent).toContain('€795.25');
     expect(document.activeElement).toBe(headerDeposit());
-    expect(screen.getByText('Deposit of €100 confirmed.')).toBeTruthy();
+    expect(screen.getByText('Deposit of €100.00 confirmed.')).toBeTruthy();
     expect(submitDeposit).toHaveBeenCalledTimes(1);
   });
 
@@ -127,7 +127,7 @@ describe('wallet: deposit', () => {
 
     await advance(DEPOSIT_DELAY_MS);
     const alert = within(dialog()).getByRole('alert');
-    expect(alert.textContent).toBe('The deposit of €109 failed. Your balance was not changed.');
+    expect(alert.textContent).toBe('The deposit of €109.00 failed. Your balance was not changed.');
     expect(balance().textContent).toContain('€695.25');
     expect(rows()[0]).toMatch(/€109\.00.*Failed/);
     expect(rows()).toHaveLength(6);
@@ -145,6 +145,22 @@ describe('wallet: deposit', () => {
     expect(submitDeposit).toHaveBeenCalledTimes(2);
     expect(rows().filter((r) => r.includes('Failed'))).toHaveLength(2);
     expect(balance().textContent).toContain('€695.25');
+  });
+
+  it('editing the amount after a failure starts a new attempt (new key); the same amount typed as 10.90 succeeds', async () => {
+    const { submitDeposit } = await loaded();
+    openDeposit();
+    fill('10.9');
+    fireEvent.click(confirmButton());
+    await advance(DEPOSIT_DELAY_MS);
+    expect(within(dialog()).getByRole('alert').textContent).toBe('The deposit of €10.90 failed. Your balance was not changed.');
+    fill('10.90');
+    expect(within(dialog()).queryByRole('alert')).toBeNull();
+    fireEvent.click(confirmButton());
+    await advance(DEPOSIT_DELAY_MS);
+    expect(submitDeposit.mock.calls.map(([entered]) => entered)).toEqual(['10.9', '10.90']);
+    expect(rows().slice(0, 2)).toEqual([expect.stringMatching(/€10\.90.*Confirmed/), expect.stringMatching(/€10\.90.*Failed/)]);
+    expect(balance().textContent).toContain('€706.15');
   });
 
   it('double click on Confirm creates one transaction and one request', async () => {
@@ -183,7 +199,7 @@ describe('wallet: deposit', () => {
 
     await advance(DEPOSIT_DELAY_MS);
     const alert = screen.getByRole('alert');
-    expect(alert.textContent).toContain('Deposit of €19 failed. Your balance was not changed.');
+    expect(alert.textContent).toContain('Deposit of €19.00 failed. Your balance was not changed.');
     expect(balance().textContent).toContain('€695.25');
     expect(rows()[0]).toMatch(/€19\.00.*Failed/);
 
@@ -200,7 +216,7 @@ describe('wallet: deposit', () => {
     fireEvent.keyDown(dlg, { key: 'Escape' });
     await advance(DEPOSIT_DELAY_MS);
     expect(rows()[0]).toMatch(/€100\.00.*Confirmed/);
-    expect(screen.getByText('Deposit of €100 confirmed.')).toBeTruthy();
+    expect(screen.getByText('Deposit of €100.00 confirmed.')).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -284,13 +300,17 @@ describe('deposit dialog', () => {
     expect(within(dialog()).getByText(/From/).textContent).toBe('From £1.00 to £5,000.00');
   });
 
-  it('preview shows the normalized amount, the rate and the converted amount', async () => {
+  it('preview shows the amount with two decimals (from minor units), the rate and the converted amount', async () => {
     await loaded();
     openDeposit();
-    fill('10.90', 'USD');
+    fill('10.9', 'USD');
     const preview = dialog().querySelector('dl') as HTMLElement;
-    expect(preview.textContent).toBe('You deposit$10.9Rate$1.00 = €0.92You receive€10.03');
-    expect(preview.querySelectorAll('bdi')).toHaveLength(4);
+    expect(preview.textContent).toBe('You deposit$10.90Rate$1.00 = €0.92You receive€10.03');
+    fill('10.90', 'GBP');
+    expect(preview.textContent).toBe('You deposit£10.90Rate£1.00 = €1.17You receive€12.75');
+    fill('10.9', 'EUR');
+    expect(preview.textContent).toBe('You deposit€10.90You receive€10.90'); // same currency: no rate line
+    expect(preview.querySelectorAll('bdi')).toHaveLength(2); // every amount isolated (4 with a rate line)
   });
 
   it('offline: a message, Confirm blocked, no request; back online it works', async () => {
@@ -395,7 +415,7 @@ describe('robustness', () => {
   });
 });
 
-// The failure rule ("normalized amount ends with 9") does not depend on the locale: "10,90" in ru is "10.90" in en.
+// The failure rule (last digit of the entered text is 9) does not depend on the locale: "10,90" in ru is "10.90" in en.
 describe('wallet in ru', () => {
   beforeEach(() => {
     document.documentElement.lang = 'ru';
@@ -407,18 +427,29 @@ describe('wallet in ru', () => {
 
   const ruDialog = () => screen.getByRole('dialog', { name: 'Пополнение' });
 
-  it('"10,90": the preview shows the normalized amount in ru format, and the deposit fails like "10.90" in en', async () => {
-    await loaded();
+  const ruDeposit = async (amount: string) => {
     const trigger = screen.getAllByRole('button', { name: 'Пополнить' })[0] as HTMLElement;
     trigger.focus();
     fireEvent.click(trigger);
-    fireEvent.change(within(ruDialog()).getByLabelText('Сумма'), { target: { value: '10,90' } });
+    fireEvent.change(within(ruDialog()).getByLabelText('Сумма'), { target: { value: amount } });
     const preview = ruDialog().querySelector('dl') as HTMLElement;
-    expect(within(preview).getByText('Вы вносите').nextElementSibling?.textContent).toBe('10,9 €');
-
+    const lines = [within(preview).getByText('Вы вносите'), within(preview).getByText('Вы получите')].map((dt) => dt.nextElementSibling?.textContent);
     fireEvent.click(within(ruDialog()).getByRole('button', { name: 'Подтвердить пополнение' }));
     await advance(DEPOSIT_DELAY_MS);
-    expect(within(ruDialog()).getByRole('alert').textContent).toBe('Пополнение на 10,9 € не прошло. Баланс не изменился.');
-    expect(screen.getByRole('button', { name: /^Баланс:/ }).textContent).toContain('695,25 €');
+    return lines;
+  };
+
+  it('"10,90": both preview lines read 10,90 € and the deposit succeeds like "10.90" in en', async () => {
+    await loaded();
+    expect(await ruDeposit('10,90')).toEqual(['10,90\u00a0€', '10,90\u00a0€']);
+    expect(screen.queryByRole('dialog', { name: 'Пополнение' })).toBeNull(); // confirmed: the dialog closed
+    expect(screen.getByRole('button', { name: /^Баланс:/ }).textContent).toContain('706,15\u00a0€');
+  });
+
+  it('"10,9": the same preview, and the deposit fails like "10.9" in en', async () => {
+    await loaded();
+    expect(await ruDeposit('10,9')).toEqual(['10,90\u00a0€', '10,90\u00a0€']);
+    expect(within(ruDialog()).getByRole('alert').textContent).toBe('Пополнение на 10,90\u00a0€ не прошло. Баланс не изменился.');
+    expect(screen.getByRole('button', { name: /^Баланс:/ }).textContent).toContain('695,25\u00a0€');
   });
 });

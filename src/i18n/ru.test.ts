@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatEnteredAmount, formatMoney, formatRelativeTime } from '../shared/format';
+import { formatMoney, formatRelativeTime } from '../shared/format';
 import { en } from './en';
 import { ru } from './ru';
 import { translate } from './t';
@@ -104,9 +104,9 @@ describe('ru plurals and formats', () => {
     expect(translate(ru, 'ru', 'palette.count', { count })).toBe(text);
   });
 
-  it('money, entered amounts and relative time follow the ru locale (Intl)', () => {
+  it('money and relative time follow the ru locale (Intl)', () => {
     expect(formatMoney(1_069_525, 'EUR', 'ru')).toBe('10 695,25 €');
-    expect(formatEnteredAmount('10.9', 'EUR', 'ru')).toBe('10,9 €');
+    expect(formatMoney(1_090, 'EUR', 'ru')).toBe('10,90\u00a0€');
     const now = Date.UTC(2026, 9, 17, 12);
     expect(formatRelativeTime(now - 5 * 60_000, now, 'ru')).toBe('5 минут назад');
     expect(formatRelativeTime(now - 30_000, now, 'ru')).toBeNull(); // under a minute: the dictionary's "только что"

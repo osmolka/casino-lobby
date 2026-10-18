@@ -249,7 +249,7 @@ Phases 2 and 6 are run as separate sessions: 2a / 2b and 6a / 6b / 6c (see subse
 - Unit test of the invariant over an arbitrary sequence of successes and failures.
 
 **Failure (deterministic)**
-- The normalized entered amount string (as typed, without insignificant zeros) ends with the digit `9` → failure. Examples: `19` fails, `10.99` fails, `90` succeeds, `9.50` → `9.5` succeeds. Document the rule in the README.
+- The last digit of the entered text (trimmed, `,` treated as `.`, no zero stripping) is `9` → failure. Examples: `19`, `10.99`, `10.9`, `09` fail; `90`, `9.50`, `10.90`, `10.` succeed. A trailing separator is valid input and skipped by the rule (`19.` fails as 19). Locale independent (`10,90` = `10.90`). The UI shows amounts from integer minor units with two decimals and never mentions the rule. Document the rule in the README.
 - "Server" delay ~800 ms.
 - Optimistic UI: the transaction is `pending` immediately and the balance grows immediately. On failure: status `failed`, balance reverts (via the invariant), an error message in the dialog with `role="alert"`, the transaction is marked Failed in the list.
 
@@ -436,7 +436,7 @@ npm run test:e2e                # Playwright (run `npx playwright install` once)
 - H8 Tiny game — No. Would build an explicit state machine (idle → spinning → settling → result), decide the outcome before animating, and prove RTP analytically in a unit test.
 
 ## Assumptions
-- Deposit failure rule: normalized input string ends with "9".
+- Deposit failure rule: the last digit of the entered amount text is "9" (`10.9` fails, `10.90` succeeds: same amount, by design; `,` = `.`).
 - "Transaction appears in the feed" interpreted as the wallet's transaction list.
 
 ## Proof

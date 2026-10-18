@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currencyName, formatDateTime, formatEnteredAmount, formatMoney, formatMoneyRange, formatPercent, formatRelativeTime, minorToDecimal } from './format';
+import { currencyName, formatDateTime, formatMoney, formatMoneyRange, formatPercent, formatRelativeTime, minorToDecimal } from './format';
 
 describe('minorToDecimal', () => {
   it('converts integer minor units to an exact decimal string', () => {
@@ -48,15 +48,6 @@ describe('formatPercent', () => {
   it('formats a percent value with up to two decimals', () => {
     expect(formatPercent(96.21, 'en')).toBe('96.21%');
     expect(formatPercent(97, 'en')).toBe('97%');
-  });
-});
-
-describe('formatEnteredAmount', () => {
-  it('shows a normalized amount as entered: no padding to 2 decimals', () => {
-    expect(formatEnteredAmount('10.9', 'USD', 'en')).toBe('$10.9');
-    expect(formatEnteredAmount('9.5', 'EUR', 'en')).toBe('€9.5');
-    expect(formatEnteredAmount('100', 'GBP', 'en')).toBe('£100');
-    expect(formatEnteredAmount('1234.56', 'EUR', 'en')).toBe('€1,234.56');
   });
 });
 

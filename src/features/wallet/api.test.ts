@@ -98,7 +98,7 @@ describe('fetchWallet', () => {
 });
 
 describe('submitDeposit', () => {
-  it(`resolves after ${DEPOSIT_DELAY_MS} ms, rejects when the normalized amount ends with 9`, async () => {
+  it(`resolves after ${DEPOSIT_DELAY_MS} ms, rejects when the entered text ends with the digit 9`, async () => {
     const api = createWalletApi({ search: '' });
     let ok = false;
     void api.submitDeposit('100', signal()).then(() => (ok = true));
@@ -109,6 +109,8 @@ describe('submitDeposit', () => {
 
     const failed = api.submitDeposit('10.9', signal()).catch((e: unknown) => e);
     expect(await settle(failed, DEPOSIT_DELAY_MS)).toBeInstanceOf(WalletError);
+    const sameAmount = api.submitDeposit('10.90', signal()).then(() => 'ok');
+    expect(await settle(sameAmount, DEPOSIT_DELAY_MS)).toBe('ok');
   });
 });
 

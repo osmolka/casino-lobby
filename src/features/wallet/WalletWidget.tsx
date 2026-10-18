@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useI18n } from '../../i18n/LocaleProvider';
 import { Dialog } from '../../shared/Dialog';
-import { formatDateTime, formatEnteredAmount, formatMoney } from '../../shared/format';
+import { formatDateTime, formatMoney } from '../../shared/format';
 import { ChevronDownIcon, CloseIcon, PlusIcon } from '../../shared/icons';
 import { Skeleton } from '../../shared/Skeleton';
 import { useAnimatedNumber } from '../../shared/useAnimatedNumber';
@@ -109,7 +109,7 @@ function WalletReady() {
     async (request: DepositRequest): Promise<DepositResult> => {
       const session = sessionRef.current;
       const result = await deposit(request);
-      const amount = formatEnteredAmount(request.normalized, request.source.currency, code);
+      const amount = formatMoney(request.source.amount, request.source.currency, code);
       const dialogShowsIt = dialogOpenRef.current && session === sessionRef.current;
       if (result === 'confirmed') {
         setAnnouncement(t('wallet.notice.confirmed', { amount }));

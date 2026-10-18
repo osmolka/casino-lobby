@@ -7,8 +7,8 @@ import { initialWalletState, selectBalance, walletReducer } from './walletReduce
 export interface DepositRequest {
   /** Idempotency key of this attempt: the same key never creates a second transaction or request. */
   key: string;
-  /** Normalized amount string; the failure rule is evaluated on it. */
-  normalized: string;
+  /** The amount text as entered (trimmed); the failure rule reads it. Not for display: use `source`. */
+  entered: string;
   source: { amount: number; currency: Currency };
 }
 
@@ -76,7 +76,7 @@ export function WalletProvider({ children, api: injected }: { children: ReactNod
       const existing = requests.current.get(request.key);
       if (existing) return existing;
 
-      const { key, normalized, source } = request;
+      const { key, entered, source } = request;
       dispatch({
         type: 'depositStarted',
         tx: {
@@ -95,7 +95,7 @@ export function WalletProvider({ children, api: injected }: { children: ReactNod
         dispatch({ type: 'depositSettled', id: key, ok });
         return ok ? 'confirmed' : 'failed';
       };
-      const promise = api.submitDeposit(normalized, controller.signal).then(
+      const promise = api.submitDeposit(entered, controller.signal).then(
         () => settle(true),
         () => settle(false),
       );
