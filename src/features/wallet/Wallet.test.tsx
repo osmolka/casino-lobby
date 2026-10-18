@@ -163,7 +163,29 @@ describe('wallet: deposit', () => {
     expect(balance().textContent).toContain('€706.15');
   });
 
-  it('double click on Confirm creates one transaction and one request', async () => {
+  it('the rule reads the typed amount in the chosen currency, not the converted EUR amount', async () => {
+    const { submitDeposit } = await loaded();
+    // 1.18 USD → €1.09: the converted EUR cents end in 9, the typed text ends in 8 → succeeds.
+    openDeposit();
+    fill('1.18', 'USD');
+    expect(within(dialog()).getByText('You receive').nextElementSibling?.textContent).toBe('€1.09');
+    fireEvent.click(confirmButton());
+    await advance(DEPOSIT_DELAY_MS);
+    expect(screen.queryByRole('dialog', { name: 'Deposit' })).toBeNull();
+    expect(balance().textContent).toContain('€696.34');
+
+    // 19 USD → €17.48: the converted amount ends in 8, the typed text ends in 9 → fails.
+    openDeposit();
+    fill('19', 'USD');
+    expect(within(dialog()).getByText('You receive').nextElementSibling?.textContent).toBe('€17.48');
+    fireEvent.click(confirmButton());
+    await advance(DEPOSIT_DELAY_MS);
+    expect(within(dialog()).getByRole('alert').textContent).toBe('The deposit of $19.00 failed. Your balance was not changed.');
+    expect(balance().textContent).toContain('€696.34');
+    expect(submitDeposit.mock.calls.map(([entered]) => entered)).toEqual(['1.18', '19']);
+  });
+
+    it('double click on Confirm creates one transaction and one request', async () => {
     const { submitDeposit } = await loaded();
     openDeposit();
     fill('100');

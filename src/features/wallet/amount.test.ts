@@ -38,6 +38,8 @@ describe('parseAmount', () => {
     ['Infinity', 'invalid'],
     ['１９', 'invalid'], // full-width digits
     ['١٩', 'invalid'], // Arabic-Indic digits
+    ['1９', 'invalid'], // ASCII digits with a full-width last digit: never reaches the rule
+    ['10.9９', 'invalid'],
     ['1.234', 'precision'],
     ['0', 'zero'],
     ['0.00', 'zero'],
