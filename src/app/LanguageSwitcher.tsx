@@ -6,7 +6,7 @@ import styles from './Header.module.css';
 
 const codes = Object.keys(LOCALES).filter(isLocaleCode);
 
-/** Renders nothing while only one locale exists (ru arrives in phase 6a). */
+/** Options are endonyms with their own lang. Renders nothing if only one locale exists. */
 export function LanguageSwitcher() {
   const { t, locale, setLocale } = useI18n();
   const id = useId();

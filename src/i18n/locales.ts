@@ -1,6 +1,7 @@
 import { en, type Messages } from './en';
+import { ru } from './ru';
 
-export type LocaleCode = 'en';
+export type LocaleCode = 'en' | 'ru';
 
 export interface Locale {
   code: LocaleCode;
@@ -10,6 +11,7 @@ export interface Locale {
 
 export const LOCALES: Record<LocaleCode, Locale> = {
   en: { code: 'en', dir: 'ltr', messages: en },
+  ru: { code: 'ru', dir: 'ltr', messages: ru },
 };
 
 export const DEFAULT_LOCALE: LocaleCode = 'en';

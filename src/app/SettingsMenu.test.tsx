@@ -24,6 +24,7 @@ function renderMenu() {
 const toggle = () => screen.getByRole('button', { name: 'Settings' });
 const slider = () => screen.getByRole<HTMLInputElement>('slider', { name: 'Accent hue' });
 const panel = () => screen.queryByRole('region', { name: 'Settings' });
+const language = () => screen.getByRole<HTMLSelectElement>('combobox', { name: 'Language' });
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -33,6 +34,8 @@ afterEach(() => {
   vi.useRealTimers();
   localStorage.clear();
   root.removeAttribute('style');
+  root.lang = '';
+  root.dir = '';
 });
 
 describe('SettingsMenu', () => {
@@ -44,7 +47,7 @@ describe('SettingsMenu', () => {
     await user.click(toggle());
     expect(toggle().getAttribute('aria-expanded')).toBe('true');
     expect(panel()).not.toBeNull();
-    expect(document.activeElement).toBe(slider()); // only one locale: the slider is the first control
+    expect(document.activeElement).toBe(language()); // focus order: Language → hue slider → Reset
   });
 
   it('Esc closes it and returns focus to the toggle', async () => {
@@ -78,6 +81,8 @@ describe('SettingsMenu', () => {
     const user = setupUser();
     renderMenu();
     await user.click(toggle());
+    await user.tab(); // Language → slider
+    expect(document.activeElement).toBe(slider());
     await user.tab(); // slider → Reset
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Reset accent' }));
     expect(toggle().getAttribute('aria-expanded')).toBe('true');
@@ -119,5 +124,31 @@ describe('SettingsMenu', () => {
     expect(localStorage.getItem(ACCENT_HUE_KEY)).toBeNull();
     expect(slider().value).toBe('292');
     expect(toggle().getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('Language options are labelled in their own language, each with its lang', async () => {
+    const user = setupUser();
+    renderMenu();
+    await user.click(toggle());
+    const options = [...language().options].map((o) => [o.value, o.textContent, o.lang]);
+    expect(options).toEqual([
+      ['en', 'English', 'en'],
+      ['ru', 'Русский', 'ru'],
+    ]);
+  });
+
+  it('choosing Русский switches the UI, lang and the stored choice; the panel stays open on the select', async () => {
+    const user = setupUser();
+    renderMenu();
+    await user.click(toggle());
+    await user.selectOptions(language(), 'ru');
+    expect(root.lang).toBe('ru');
+    expect(localStorage.getItem('lobby.locale')).toBe('ru');
+    const select = screen.getByRole<HTMLSelectElement>('combobox', { name: 'Язык' });
+    expect(document.activeElement).toBe(select);
+    expect(screen.getByRole('slider', { name: 'Оттенок акцента' })).toBeDefined();
+    expect([...select.options].map((o) => o.textContent)).toEqual(['English', 'Русский']);
+    await user.selectOptions(select, 'en');
+    expect(root.lang).toBe('en');
   });
 });

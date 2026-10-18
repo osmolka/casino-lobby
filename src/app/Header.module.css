@@ -33,7 +33,7 @@
 /* Narrow phones: the controls (search, balance, deposit, theme) keep one row; the logo link keeps its aria-label. */
 @media (width < 26rem) {
   .header {
-    gap: var(--space-2);
+    gap: var(--header-gap);
     padding-inline: var(--space-3);
   }
 

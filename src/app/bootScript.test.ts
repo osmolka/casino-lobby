@@ -1,6 +1,6 @@
 import html from '../../index.html?raw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { LOCALE_KEY } from '../i18n/locales';
+import { LOCALES, LOCALE_KEY } from '../i18n/locales';
 import { ACCENT_HUE_KEY } from './accent';
 import { THEME_KEY } from './theme';
 
@@ -68,6 +68,20 @@ describe('index.html boot script', () => {
     expect(document.documentElement.dataset.theme).toBe('dark');
     expect(document.documentElement.lang).toBe('en');
     expect(document.documentElement.dir).toBe('ltr');
+  });
+
+  it('applies a stored ru locale (lang, ltr) before the app mounts', () => {
+    mockSystemDark(false);
+    localStorage.setItem(LOCALE_KEY, 'ru');
+    runBoot();
+    expect(document.documentElement.lang).toBe('ru');
+    expect(document.documentElement.dir).toBe('ltr');
+  });
+
+  it('knows exactly the locales of src/i18n/locales.ts', () => {
+    const map = /var locales = (\{[^}]*\});/.exec(script)?.[1] ?? '';
+    const codes = [...map.matchAll(/(\w+):\s*'(ltr|rtl)'/g)].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(codes)).toEqual(Object.fromEntries(Object.values(LOCALES).map((l) => [l.code, l.dir])));
   });
 
   it('survives localStorage throwing', () => {

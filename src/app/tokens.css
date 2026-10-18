@@ -102,7 +102,7 @@
   :root {
     --header-control-size: 2.25rem;
     --header-gap: 0.375rem;
-    --control-pad-inline: 0.375rem;
+    --control-pad-inline: 0.25rem;
   }
 }
 

@@ -142,6 +142,7 @@ describe('command palette: combobox', () => {
     await user.click(trigger());
     expect(options().map((o) => o.textContent)).toEqual([
       'Switch to dark theme',
+      'Change language to Русский',
       'Make a deposit',
       'Clear filters',
       'Book of EmbersEmber Games',
@@ -150,8 +151,7 @@ describe('command palette: combobox', () => {
       'Book of DawnPixel Oak',
       'Frozen Vault XLPixel Oak',
       'Ember Games1 game',
-      'Pixel Oak2 games',
-    ]);
+    ]); // max 10: the language action pushed the last provider out
   });
 
   it('keyboard order equals DOM order across groups: ↓ ↑ wrap, Home, End', async () => {
@@ -347,9 +347,46 @@ describe('command palette: catalog states', () => {
   it('catalog failed: actions only, a note with Retry that keeps focus in the dialog', async () => {
     const user = await renderApp('?mock=fail-catalog');
     await user.click(trigger());
-    expect(options().map((o) => o.textContent)).toEqual(['Switch to dark theme', 'Make a deposit']);
+    expect(options().map((o) => o.textContent)).toEqual(['Switch to dark theme', 'Change language to Русский', 'Make a deposit']);
     await user.click(within(palette()).getByRole('button', { name: 'Try again' }));
     expect(document.activeElement).toBe(combobox());
     expect(within(palette()).getByText('Loading games')).toBeDefined();
+  });
+});
+
+describe('command palette in ru', () => {
+  beforeEach(() => {
+    document.documentElement.lang = 'ru'; // what the boot script sets for a stored ru choice
+  });
+
+  afterEach(() => {
+    document.documentElement.lang = '';
+    document.documentElement.dir = '';
+  });
+
+  const ruPalette = () => screen.getByRole('dialog', { name: 'Поиск и команды' });
+  const ruInput = () => within(ruPalette()).getByRole('combobox', { name: 'Поиск игр, провайдеров и действий' });
+  const labels = () => within(ruPalette()).getAllByRole('option').map((o) => o.textContent);
+
+  it('actions have Russian names; the language action lists only the other locale', async () => {
+    const user = await renderApp();
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Поиск' }));
+    expect(labels().slice(0, 3)).toEqual(['Включить тёмную тему', 'Сменить язык на English', 'Пополнить счёт']);
+    expect(labels().some((l) => l.includes('Русский'))).toBe(false);
+  });
+
+  it('a Russian query finds the action (е matches ё); Enter on the language action switches to en', async () => {
+    const user = await renderApp();
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Поиск' }));
+    await user.type(ruInput(), 'темн');
+    expect(labels()[0]).toBe('Включить тёмную тему');
+
+    await user.clear(ruInput());
+    await user.type(ruInput(), 'язык');
+    expect(labels()).toEqual(['Сменить язык на English']);
+    await user.keyboard('{Enter}');
+    expect(document.documentElement.lang).toBe('en');
+    expect(screen.queryByRole('dialog', { name: 'Поиск и команды' })).toBeNull();
+    expect(within(screen.getByRole('banner')).getByRole('button', { name: 'Search' })).toBeDefined();
   });
 });

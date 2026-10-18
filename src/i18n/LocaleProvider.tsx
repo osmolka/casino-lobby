@@ -28,6 +28,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.lang = locale.code;
     root.dir = locale.dir;
+    document.title = translate(locale.messages, locale.code, 'app.title');
   }, [locale]);
 
   const setLocale = useCallback((next: LocaleCode) => {

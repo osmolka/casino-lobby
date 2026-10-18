@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>Lucky Lobby</title>
+    <title>Lucky Lobby — Casino games</title>
     <!-- Runs before any CSS: sets theme, lang and dir so there is no flash. Keys: src/app/theme.ts, src/i18n/locales.ts, src/app/accent.ts. -->
     <script id="boot">
       (function () {
@@ -20,7 +20,7 @@
         if (theme !== 'light' && theme !== 'dark') {
           theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
-        var locales = { en: 'ltr' };
+        var locales = { en: 'ltr', ru: 'ltr' };
         if (!Object.prototype.hasOwnProperty.call(locales, locale)) locale = 'en';
         root.setAttribute('data-theme', theme);
         root.style.colorScheme = theme;

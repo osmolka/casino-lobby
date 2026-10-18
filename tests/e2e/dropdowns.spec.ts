@@ -5,6 +5,7 @@ const balance = (page: Page) => page.getByRole('button', { name: /^Balance:/ });
 const sort = (page: Page) => page.getByLabel('Sort by');
 const dialog = (page: Page) => page.getByRole('dialog', { name: 'Deposit' });
 const currency = (page: Page) => dialog(page).getByLabel('Currency');
+const language = (page: Page) => page.getByRole('region', { name: 'Settings' }).getByLabel('Language');
 
 /**
  * The control's chevron: the balance button's own svg, or the svg next to a select in its wrapper.
@@ -50,7 +51,7 @@ const pageOverflow = (page: Page) =>
 
 for (const width of [1440, 360]) {
   for (const dir of ['ltr', 'rtl'] as const) {
-    test(`${width}px ${dir}: the chevron sits at the same inline-end gap on the balance button, Sort and Currency`, async ({
+    test(`${width}px ${dir}: the chevron sits at the same inline-end gap on the balance button, Sort, Language and Currency`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 800 });
@@ -64,11 +65,18 @@ for (const width of [1440, 360]) {
       expect(s.textClearance, 'sort text vs chevron').toBeGreaterThanOrEqual(0);
       expect(await pageOverflow(page)).toBeLessThanOrEqual(0);
 
+      await page.getByRole('banner').getByRole('button', { name: 'Settings' }).click();
+      await expect(language(page)).toBeFocused();
+      const l = await chevron(language(page));
+      expect(l.textClearance, 'language text vs chevron').toBeGreaterThanOrEqual(0);
+      await page.keyboard.press('Escape');
+
       await page.getByRole('banner').getByRole('button', { name: 'Deposit', exact: true }).click();
       const c = await chevron(currency(page));
       expect(c.textClearance, 'currency text vs chevron').toBeGreaterThanOrEqual(0);
       expect(Math.abs(s.gap - b.gap), `sort ${s.gap} vs balance ${b.gap}`).toBeLessThanOrEqual(0.5);
       expect(Math.abs(c.gap - b.gap), `currency ${c.gap} vs balance ${b.gap}`).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(l.gap - b.gap), `language ${l.gap} vs balance ${b.gap}`).toBeLessThanOrEqual(0.5);
       expect(await pageOverflow(page)).toBeLessThanOrEqual(0);
     });
   }

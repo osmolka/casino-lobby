@@ -24,7 +24,7 @@ function viewState(page: Page): Promise<ViewState> {
       checked: [...document.querySelectorAll<HTMLInputElement>('main input[type=checkbox]:checked')].map(
         (i) => i.parentElement?.textContent ?? '',
       ),
-      sort: document.querySelector('select')?.value ?? '',
+      sort: document.querySelector<HTMLSelectElement>('main select')?.value ?? '', // the header has the Language select
       q: document.querySelector<HTMLInputElement>('input[type=search]')?.value ?? '',
     };
   });

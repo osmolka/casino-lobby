@@ -44,6 +44,12 @@ describe('fuzzyScore', () => {
     expect(fuzzyScore('смн тм', 'Сменить тему')?.matches).toEqual([0, 1, 3, 8, 10]);
   });
 
+  it('treats ё and е as the same letter (Russian users often type е); indices still point into the text', () => {
+    expect(fuzzyScore('темн', 'Включить тёмную тему')).toEqual({ score: 3000, matches: [9, 10, 11, 12] });
+    expect(fuzzyScore('ТЁМН', 'Включить темную тему')?.score).toBe(3000);
+    expect(fuzzyScore('тем ную', 'Включить тёмную тему')?.matches).toEqual([9, 10, 11, 12, 13, 14]); // subsequence folds too
+  });
+
   it('subsequence: tolerates missing letters (typos) and ignores spaces in the query', () => {
     expect(fuzzyScore('strbst', 'Starburst')).not.toBeNull();
     expect(fuzzyScore('crsh', 'Crystal Rush')).not.toBeNull();

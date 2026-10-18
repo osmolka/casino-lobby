@@ -394,3 +394,31 @@ describe('robustness', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+// The failure rule ("normalized amount ends with 9") does not depend on the locale: "10,90" in ru is "10.90" in en.
+describe('wallet in ru', () => {
+  beforeEach(() => {
+    document.documentElement.lang = 'ru';
+  });
+
+  afterEach(() => {
+    document.documentElement.lang = '';
+  });
+
+  const ruDialog = () => screen.getByRole('dialog', { name: 'Пополнение' });
+
+  it('"10,90": the preview shows the normalized amount in ru format, and the deposit fails like "10.90" in en', async () => {
+    await loaded();
+    const trigger = screen.getAllByRole('button', { name: 'Пополнить' })[0] as HTMLElement;
+    trigger.focus();
+    fireEvent.click(trigger);
+    fireEvent.change(within(ruDialog()).getByLabelText('Сумма'), { target: { value: '10,90' } });
+    const preview = ruDialog().querySelector('dl') as HTMLElement;
+    expect(within(preview).getByText('Вы вносите').nextElementSibling?.textContent).toBe('10,9 €');
+
+    fireEvent.click(within(ruDialog()).getByRole('button', { name: 'Подтвердить пополнение' }));
+    await advance(DEPOSIT_DELAY_MS);
+    expect(within(ruDialog()).getByRole('alert').textContent).toBe('Пополнение на 10,9 € не прошло. Баланс не изменился.');
+    expect(screen.getByRole('button', { name: /^Баланс:/ }).textContent).toContain('695,25 €');
+  });
+});

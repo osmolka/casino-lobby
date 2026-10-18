@@ -13,29 +13,53 @@ const WIDE_WALLET = JSON.stringify([
   },
 ]);
 
-const BALANCES = [
-  { name: 'fixture balance €695.25', text: '€695.25', stored: null },
-  { name: 'wide balance €10,695.25', text: '€10,695.25', stored: WIDE_WALLET },
+/**
+ * Spare width on a 360px phone between the logo and the controls (bundled Chromium + bundled Inter, so it is
+ * deterministic; ±1px). Measured in phase 6a, recorded in PROGRESS.md.
+ */
+const LOCALES = [
+  {
+    code: 'en',
+    theme: 'Dark theme',
+    balances: [
+      { name: 'fixture', text: '€695.25', stored: null, phoneSpare: 31 },
+      { name: 'wide', text: '€10,695.25', stored: WIDE_WALLET, phoneSpare: 7 },
+    ],
+  },
+  {
+    code: 'ru',
+    theme: 'Тёмная тема',
+    balances: [
+      { name: 'fixture', text: '695,25 €', stored: null, phoneSpare: 27 },
+      { name: 'wide', text: '10 695,25 €', stored: WIDE_WALLET, phoneSpare: 3 },
+    ],
+  },
 ] as const;
 
-async function open(page: Page, stored: string | null, text: string) {
-  if (stored) {
-    await page.addInitScript((value) => {
-      localStorage.setItem('wallet:v1', value);
-    }, stored);
-  }
+type Balance = (typeof LOCALES)[number]['balances'][number];
+
+async function open(page: Page, locale: string, balance: Balance) {
+  await page.addInitScript(
+    ([code, stored]) => {
+      localStorage.setItem('lobby.locale', code);
+      if (stored) localStorage.setItem('wallet:v1', stored);
+    },
+    [locale, balance.stored] as const,
+  );
   await page.goto('/');
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
-  await expect(page.getByRole('banner').locator('bdi[aria-hidden="true"]')).toHaveText(text);
+  await expect(page.getByRole('banner').locator('bdi[aria-hidden="true"]')).toHaveText(balance.text);
 }
 
-/** Logo and every visible header control: rects, rows, overflow. */
+/** Logo and every visible header control: rects, rows, overflow, and the spare width before the controls. */
 function measure(page: Page) {
   return page.evaluate(() => {
     const header = document.querySelector('header');
-    if (!header) throw new Error('no header');
-    const els = [header.querySelector('a'), ...header.querySelectorAll('[role="group"] button')].filter(
-      (el): el is HTMLElement => el instanceof HTMLElement && el.offsetParent !== null && !el.closest('[hidden], dialog'),
+    const group = header?.querySelector('[role="group"]');
+    const logo = header?.querySelector('a');
+    if (!header || !group || !logo) throw new Error('no header');
+    const els: HTMLElement[] = [logo, ...group.querySelectorAll('button')].filter(
+      (el) => el.offsetParent !== null && !el.closest('[hidden], dialog'),
     );
     const viewport = document.documentElement.clientWidth;
     const items = els.map((el) => {
@@ -51,7 +75,14 @@ function measure(page: Page) {
         clipped: el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1,
       };
     });
-    return { viewport, scrollWidth: document.documentElement.scrollWidth, headerHeight: header.getBoundingClientRect().height, items };
+    const balance = group.querySelector('button[aria-expanded]');
+    return {
+      viewport,
+      scrollWidth: document.documentElement.scrollWidth,
+      spare: group.getBoundingClientRect().left - logo.getBoundingClientRect().right - Number.parseFloat(getComputedStyle(header).columnGap),
+      balanceWhiteSpace: balance ? getComputedStyle(balance).whiteSpace : '',
+      items,
+    };
   });
 }
 
@@ -62,6 +93,7 @@ const rows = (m: Measured) => [...new Set(m.items.slice(1).map((i) => Math.round
 
 function expectSound(m: Measured) {
   expect(m.scrollWidth, 'no horizontal scroll').toBeLessThanOrEqual(m.viewport);
+  expect(m.balanceWhiteSpace, 'the balance never breaks (ru: no-break space before €)').toBe('nowrap');
   for (const item of m.items) {
     expect(item.x, `${item.name} inside the viewport`).toBeGreaterThanOrEqual(0);
     expect(item.right, `${item.name} inside the viewport`).toBeLessThanOrEqual(m.viewport);
@@ -77,51 +109,56 @@ function expectSound(m: Measured) {
   }
 }
 
-async function expectThemeOneClick(page: Page) {
+async function expectThemeOneClick(page: Page, label: string) {
   const before = await page.evaluate(() => document.documentElement.dataset.theme);
-  await page.getByRole('banner').getByRole('button', { name: 'Dark theme' }).click();
+  await page.getByRole('banner').getByRole('button', { name: label }).click();
   await expect(page.locator('html')).not.toHaveAttribute('data-theme', before ?? '');
 }
 
-// Phones: overlay scrollbars, the full 360px for content.
-test.describe('360px phone (overlay scrollbars)', () => {
-  test.use({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
+for (const locale of LOCALES) {
+  // Phones: overlay scrollbars, the full 360px for content.
+  test.describe(`${locale.code}, 360px phone (overlay scrollbars)`, () => {
+    test.use({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
 
-  for (const balance of BALANCES) {
-    test(`${balance.name}: header on one row, nothing clipped, no horizontal scroll, theme in one tap`, async ({ page }) => {
-      await open(page, balance.stored, balance.text);
+    for (const balance of locale.balances) {
+      test(`${balance.name} balance ${balance.text}: one row, ${balance.phoneSpare}px spare, nothing clipped, theme in one tap`, async ({
+        page,
+      }) => {
+        await open(page, locale.code, balance);
+        const m = await measure(page);
+        expect(m.viewport).toBe(360);
+        expectSound(m);
+        expect(rows(m), 'one row').toHaveLength(1);
+        expect(Math.abs(m.spare - balance.phoneSpare), `spare ${m.spare}px`).toBeLessThanOrEqual(1);
+        await expectThemeOneClick(page, locale.theme);
+      });
+    }
+  });
+
+  // A desktop window 360px wide: a classic 15px scrollbar leaves 345px. The wide balance may wrap the settings
+  // button to a second row; the wrap must stay tidy (rows end-aligned, nothing overlapping or clipped).
+  test.describe(`${locale.code}, 360px window (classic scrollbar)`, () => {
+    test.use({ viewport: { width: 360, height: 740 } });
+
+    test(`fixture balance ${locale.balances[0].text}: header on one row`, async ({ page }) => {
+      await open(page, locale.code, locale.balances[0]);
       const m = await measure(page);
-      expect(m.viewport).toBe(360);
       expectSound(m);
       expect(rows(m), 'one row').toHaveLength(1);
-      await expectThemeOneClick(page);
+      await expectThemeOneClick(page, locale.theme);
     });
-  }
-});
 
-// A desktop window 360px wide: a classic 15px scrollbar leaves 345px. The wide balance may wrap the settings
-// button to a second row; the wrap must stay tidy (rows end-aligned, nothing overlapping or clipped).
-test.describe('360px window (classic scrollbar)', () => {
-  test.use({ viewport: { width: 360, height: 740 } });
-
-  test(`${BALANCES[0].name}: header on one row`, async ({ page }) => {
-    await open(page, BALANCES[0].stored, BALANCES[0].text);
-    const m = await measure(page);
-    expectSound(m);
-    expect(rows(m), 'one row').toHaveLength(1);
-    await expectThemeOneClick(page);
+    test(`wide balance ${locale.balances[1].text}: at most two rows, end-aligned; theme toggle on the first row`, async ({ page }) => {
+      await open(page, locale.code, locale.balances[1]);
+      const m = await measure(page);
+      expectSound(m);
+      const lines = rows(m);
+      expect(lines.length).toBeLessThanOrEqual(2);
+      const ends = lines.map((y) => Math.max(...m.items.slice(1).filter((i) => Math.round(i.y) === y).map((i) => i.right)));
+      for (const end of ends) expect(Math.abs(end - (ends[0] ?? 0)), 'rows end-aligned').toBeLessThanOrEqual(1);
+      const theme = m.items.find((i) => i.name === locale.theme);
+      expect(Math.round(theme?.y ?? -1), 'theme toggle on the first row').toBe(lines[0]);
+      await expectThemeOneClick(page, locale.theme);
+    });
   });
-
-  test(`${BALANCES[1].name}: at most two rows, end-aligned; theme toggle stays on the first row`, async ({ page }) => {
-    await open(page, BALANCES[1].stored, BALANCES[1].text);
-    const m = await measure(page);
-    expectSound(m);
-    const lines = rows(m);
-    expect(lines.length).toBeLessThanOrEqual(2);
-    const ends = lines.map((y) => Math.max(...m.items.slice(1).filter((i) => Math.round(i.y) === y).map((i) => i.right)));
-    for (const end of ends) expect(Math.abs(end - (ends[0] ?? 0)), 'rows end-aligned').toBeLessThanOrEqual(1);
-    const theme = m.items.find((i) => i.name === 'Dark theme');
-    expect(Math.round(theme?.y ?? -1), 'theme toggle on the first row').toBe(lines[0]);
-    await expectThemeOneClick(page);
-  });
-});
+}

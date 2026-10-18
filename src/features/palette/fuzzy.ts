@@ -20,9 +20,15 @@ const GAP_EXTEND = 1;
 
 const WORD_CHAR = /[\p{L}\p{N}]/u;
 
-/** Lowercases per UTF-16 unit, so indices into the result are indices into `text`. */
+/** Lowercase, and ё as е (Russian text often omits the dots). One UTF-16 unit in, one out. */
+function fold(unit: string): string {
+  const lower = unit.toLowerCase().charAt(0);
+  return lower === 'ё' ? 'е' : lower;
+}
+
+/** Folds per UTF-16 unit, so indices into the result are indices into `text`. */
 function lowerUnits(text: string): string[] {
-  return Array.from({ length: text.length }, (_, i) => text.charAt(i).toLowerCase().charAt(0));
+  return Array.from({ length: text.length }, (_, i) => fold(text.charAt(i)));
 }
 
 function isWordStart(text: string, i: number): boolean {
@@ -89,12 +95,12 @@ function subsequence(query: string[], text: string[], wordStart: boolean[]): Fuz
 }
 
 /**
- * Case-insensitive fuzzy match. Tiers: exact > prefix > word prefix > substring > subsequence.
+ * Case-insensitive (and ё = е) fuzzy match. Tiers: exact > prefix > word prefix > substring > subsequence.
  * The query is trimmed and inner whitespace collapsed; a subsequence match ignores the query's spaces.
  * An empty query matches everything with score 0.
  */
 export function fuzzyScore(query: string, text: string): FuzzyMatch | null {
-  const q = query.trim().replace(/\s+/g, ' ').toLowerCase();
+  const q = lowerUnits(query.trim().replace(/\s+/g, ' ')).join('');
   if (q === '') return { score: 0, matches: [] };
   const units = lowerUnits(text);
   const lower = units.join('');

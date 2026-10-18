@@ -252,3 +252,24 @@ describe('FeedPanel', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'No wins yet' })).toBeDefined();
   });
 });
+
+describe('FeedPanel in ru', () => {
+  beforeEach(() => {
+    document.documentElement.lang = 'ru';
+  });
+
+  afterEach(() => {
+    document.documentElement.lang = '';
+  });
+
+  it('"только что" from the dictionary under a minute, then Intl relative time; money in ru format', async () => {
+    await renderPanel();
+    await advance(MIN_DELAY_MS);
+    fireEvent.click(screen.getByRole('button', { name: 'Приостановить ленту' }));
+    const newest = within(screen.getByRole('list', { name: 'Последние выигрыши' })).getAllByRole('listitem')[0];
+    expect(newest?.textContent).toContain('только что');
+    expect(newest?.textContent).toMatch(/выигрыш \d+,\d{2} €/);
+    await advance(TIME_REFRESH_MS * 3);
+    expect(newest?.textContent).toContain('1 минуту назад');
+  });
+});

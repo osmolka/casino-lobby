@@ -1,6 +1,10 @@
+import type { PluralForms } from './types';
+
 export const en = {
   app: {
     name: 'Lucky Lobby',
+    /** document.title; index.html has the same text for the first paint. */
+    title: 'Lucky Lobby — Casino games',
     home: 'Lucky Lobby home',
     skipToContent: 'Skip to content',
   },
@@ -19,8 +23,10 @@ export const en = {
   },
   language: {
     label: 'Language',
+    // Endonyms: each language named in itself, in every dictionary.
     names: {
       en: 'English',
+      ru: 'Русский',
     },
   },
   wallet: {
@@ -234,5 +240,8 @@ export const en = {
   },
 };
 
-type DeepString<T> = { [K in keyof T]: T[K] extends string ? string : DeepString<T[K]> };
+/** Values widened to string; a plural entry (has `other`) takes any Intl.PluralRules forms, e.g. ru few/many. */
+type DeepString<T> = {
+  [K in keyof T]: T[K] extends string ? string : T[K] extends { other: string } ? PluralForms : DeepString<T[K]>;
+};
 export type Messages = DeepString<typeof en>;

@@ -115,6 +115,7 @@ for (const scheme of ['light', 'dark'] as const) {
 
 const settings = (page: Page) => page.getByRole('banner').getByRole('button', { name: 'Settings' });
 const slider = (page: Page) => page.getByRole('slider', { name: 'Accent hue' });
+const languageSelect = (page: Page) => page.getByRole('combobox', { name: 'Language' });
 const hueVar = (page: Page) => page.evaluate(() => document.documentElement.style.getPropertyValue('--accent-h'));
 const depositBg = (page: Page) =>
   page.getByRole('banner').getByRole('button', { name: 'Deposit', exact: true }).evaluate((el) => getComputedStyle(el).backgroundColor);
@@ -125,7 +126,9 @@ test('slider by keyboard recolors the accent, persists across a reload (applied 
   const before = await depositBg(page);
 
   await settings(page).click();
-  await expect(slider(page)).toBeFocused(); // first control (one locale: no language select yet)
+  await expect(languageSelect(page)).toBeFocused(); // focus order: Language → hue slider → Reset
+  await page.keyboard.press('Tab');
+  await expect(slider(page)).toBeFocused();
   await expect(slider(page)).toHaveAttribute('aria-valuetext', '292°');
   await page.keyboard.press('ArrowRight');
   expect(await hueVar(page)).toBe('293');
@@ -172,7 +175,7 @@ test('settings panel: Esc and a click on empty header space return focus to the 
   await expect(settings(page)).toBeFocused();
 
   await page.keyboard.press('Enter');
-  await expect(slider(page)).toBeFocused();
+  await expect(languageSelect(page)).toBeFocused();
   // Empty header space: nothing focusable there (text in <main> would focus <main tabindex=-1> instead).
   const header = await page.getByRole('banner').boundingBox();
   await page.mouse.click((header?.width ?? 0) / 2, (header?.y ?? 0) + 4);
@@ -180,6 +183,9 @@ test('settings panel: Esc and a click on empty header space return focus to the 
   await expect(settings(page)).toBeFocused();
 
   await page.keyboard.press('Enter');
+  await expect(languageSelect(page)).toBeFocused();
+  await page.keyboard.press('Tab'); // Language → slider
+  await expect(slider(page)).toBeFocused();
   await page.keyboard.press('Tab'); // slider → Reset
   await expect(page.getByRole('button', { name: 'Reset accent' })).toBeFocused();
   await page.keyboard.press('Tab'); // leaves the panel
@@ -195,7 +201,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.goto('/');
     await ready(page);
     await settings(page).click();
-    await expect(slider(page)).toBeFocused();
+    await expect(languageSelect(page)).toBeFocused();
     const results: string[] = [];
     for (const hue of AXE_HUES) {
       await page.evaluate((h) => {
