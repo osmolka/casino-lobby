@@ -76,12 +76,17 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - Feed: the two jsx-a11y disables on the wins list are deliberate (focusable scrollable region with pointer/focus handlers that only pause).
 - Header at 320px: `scrollbar-gutter: stable` (dialog scroll lock) reserves 15px with a classic scrollbar → 273px for 286px of logo + controls → theme toggle wraps. Overlay scrollbars (mobile emulation) → 288px, one row. Fix = ≥13px (padding + gap at < 22rem), not a one-liner.
 
+- Header at 360px, desktop window (classic 15px scrollbar → 345px): a five-digit balance (€10,695.25) wraps the Settings gear to a 2nd end-aligned row. Accepted as the tidy fallback (user, 6a); phones (overlay scrollbars) keep one row.
+- Pointer focus on `<main tabindex=-1>` (click on text in the catalog): checked in 6a, `:focus-visible` false, no ring.
+
 - Polish leftovers (5b, timeboxed): provider checkbox rows and native selects have no hover style; game cards have no `:active`; focused headings (tabIndex −1) show the ring after keyboard use.
 
 ## Bonus claim status (H1–H5: claimed / not claimed + one-line reason; filled in phases 6–7)
 - H4: claimed — hue slider in Settings, persisted and applied before render; every hue 0–359 AA in both themes (tokens.test + rendered-pixel e2e), axe at 0/60/…/300.
 
 ## Next
-- Phase 6a (H1): ru dictionary, plurals, `ru` in locales + boot script; the language select appears in the Settings panel (first control → gets focus on open; update accent.spec focus expectations). Check 360px with long Russian strings (header, chips, dialog, settings panel).
-- E2E time budget: ~60 s including build (now ~47 s). Keep tests parallel-safe (own context, no shared state) and waiting on concrete states, never fixed sleeps.
+- Phase 6a (H1): ru dictionary, plurals, `ru` in locales + boot script. Check 360px with long Russian strings (header, chips, dialog, settings panel).
+- H1: once the Language select exists it is the Settings panel's first control and gets focus on open: update `accent.spec.ts` (slider focus expectations, Tab order slider → Reset) and `SettingsMenu.test.tsx` (first-control and Tab/Shift+Tab tests).
+- H1: header checks at 360px also in ru with the wide balance (ru formats it as "10 695,25 €"), same criteria as `header.spec.ts`: one row on a phone (or the tidy wrap in a desktop window), no horizontal scroll, nothing clipped/overlapping, targets ≥ 24×24, theme toggle one click.
+- E2E time budget: ~60 s including build (now ~47 s); H1 adds `ru.spec.ts`: keep tests parallel-safe (own context, no shared state), waiting on concrete states. Keep tests parallel-safe (own context, no shared state) and waiting on concrete states, never fixed sleeps.
 - Phase 6b: on an offline reload the feed falls back to `catalog:v1` for titles, so catalog and feed agree. Consider one shared in-flight games request (cleared on failure) if it stays simple. Promos offline: precache `api/promos.json` in the SW or give promos a fallback (e.g. `promos:v1`), so catalog and promos agree offline.
