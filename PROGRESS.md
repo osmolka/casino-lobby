@@ -103,7 +103,7 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - H5: not claimed — dropped (user); README: the rAF approach is shown in the balance animation. H6–H8: not claimed, README says what I would do.
 - RTL: not claimed (user, phase 7) — no complete `ar` translation; README uses the PLAN §7.2 sentence.
 
-- 7 — README (≤ ~70 rendered lines, table with "how to see it" + covering test per spec item), NOTES.md (riskiest line `api.ts:151` with two mutations run), `proof/palette.png` + `proof/offline.png` (1440×900 dark) from `scripts/proof.ts` (Playwright chromium, no new dependency, runs against `start:pwa`). Added api.test "rethrows an abort during the fetch instead of falling back" (the old abort test aborted during the delay only). "For README" / "For NOTES.md" lists above are now in those files.
+- 7 — README (≤ ~70 rendered lines, table with "how to see it" + covering test per spec item), NOTES.md (riskiest line `api.ts:151` with two mutations run), `proof/palette.png` (palette, query `live`: games + provider groups) + `proof/offline.png` (1440×900 dark) from `scripts/proof.ts` (Playwright chromium, no new dependency, runs against `start:pwa`). Agent files (CLAUDE.md, PLAN.md, PROGRESS.md, .claude/) stay tracked (user); dead `/PLAN.md` ignore line removed. Added api.test "rethrows an abort during the fetch instead of falling back" (the old abort test aborted during the delay only). "For README" / "For NOTES.md" lists above are now in those files.
 
 ## Next
 - Submission state. Manual §8 checks by the user (keyboard pass, reload persistence, mocks, hidden tab, dev console, H2 runbook, ru at 360 px, momentum on a phone).

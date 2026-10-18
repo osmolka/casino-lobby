@@ -19,8 +19,9 @@ async function palette(browser: Browser) {
   await page.getByRole('list', { name: 'Current promotions' }).getByRole('link').first().waitFor();
   await page.keyboard.press('Control+KeyK');
   const dialog = page.getByRole('dialog', { name: 'Search and commands' });
-  await dialog.getByRole('combobox').fill('frz vlt');
-  await dialog.getByRole('option', { name: /Frozen Vault XL/ }).waitFor();
+  // `live` spans two groups: games ranked prefix > subsequence, then the provider.
+  await dialog.getByRole('combobox').fill('live');
+  await dialog.getByRole('option', { name: /Silverline Live/ }).waitFor();
   await page.screenshot({ path: new URL('palette.png', outDir).pathname });
   await context.close();
 }

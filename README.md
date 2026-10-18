@@ -7,25 +7,25 @@ React 18 + strict TypeScript + Vite, plain CSS (logical properties), no UI or st
 npm install && npm start   # dev server: http://localhost:5173
 npm run start:pwa          # production build + preview on :4173 (PWA, offline)
 npm run check              # ESLint + Stylelint + typecheck + unit tests
-npm run test:e2e           # Playwright on the preview build (:4173 must be free)
+npm run test:e2e           # Playwright on the preview build (:4173 free; once: npx playwright install chromium)
 node scripts/proof.ts      # with start:pwa running: regenerates proof/*.png
 ```
-Node: `npm install && npm start` needs `^20.19 || >=22.12` (Vite 8); `npm run check` needs `^22.22.2 || ^24.15 || >=26` (Vitest 5, jsdom 30); `.ts` scripts ≥ 22.18. Once: `npx playwright install chromium`. Mocks: `?mock=slow`, `fail-`/`empty-` + `catalog`(fail only) / `feed` / `wallet` / `promos`, comma-separated.
+Node: install/start `^20.19 || >=22.12` (Vite 8); `check` `^22.22.2 || ^24.15 || >=26` (Vitest 5, jsdom 30); `.ts` scripts ≥ 22.18. Mocks: `?mock=slow`, `fail-catalog`, `fail-`/`empty-` + `feed`/`wallet`/`promos`, comma-separated.
 
 ## What's built (spec §1–§2) and how to see it
-| Item | How to see it | Covered by |
+| Item | How to see it | Test |
 |---|---|---|
-| Responsive, no horizontal scroll | DevTools at 360 / 768 / 1024 / 1440 | `catalog.spec`, `ru.spec`, `header.spec` |
-| Light/dark, one click, persisted, AA | "Dark theme" toggle in the header, reload | `Layout.test`, `bootScript.test`, `tokens.test`, axe |
-| Keyboard + screen reader | Tab from "Skip to content" | axe (`a11y.spec`), keyboard tests per feature |
-| Clean console | Fresh `npm start`, open DevTools | every e2e test fails on a console error/warning |
-| Skeleton / empty / error + Retry per region | the `?mock=` flags above | `catalog`, `feed`, `wallet`, `promos` specs |
-| Catalog: 100 games, filters + debounced search + sort, URL state | `/?cat=slots&prov=aurora-studios,ember-games&tag=megaways&sort=rtp`, then Back | `catalog.spec` "combined view…", `urlState.test` |
-| Live feed: pauses on hover, focus, hidden tab, offline, Pause; 50-entry buffer | hover the list, switch tabs | `feed.spec`, `feedIsolation.test` (0 grid commits / 10 ticks) |
-| Wallet: balance, recent list, deposit with conversion, animation, failure path | Deposit `100` → success; `109` → error, rolled back | `wallet.spec`, `walletReducer.test` (invariant) |
-| Promotions: real scroll container, snap, swipe; Prev/Next with a mouse | swipe on a phone (momentum is native) | `promos.spec`; momentum by hand |
-| Skeletons, no spinners; all text from `src/i18n` | `?mock=slow`; Settings → Русский | `cssPolish.test`, `ru.test` (same keys); literals: review, no lint rule |
-| Command palette: jump to a game, toggle theme | `Ctrl/⌘ + K` | `palette.spec`, `CommandPalette.test` |
+| Responsive, no horizontal scroll | DevTools at 360 / 768 / 1024 / 1440 | `catalog.spec` |
+| Light/dark, one click, persisted, AA | "Dark theme" toggle in the header, reload | `Layout`, `tokens` |
+| Keyboard + screen reader | Tab from "Skip to content" | `a11y.spec` (axe) |
+| Clean console | fresh `npm start`, DevTools | every e2e test |
+| Skeleton / empty / error + Retry | the `?mock=` flags above | each feature spec |
+| Catalog: 100 games, filters, debounced search, sort, URL | `/?cat=slots&tag=megaways&sort=rtp`, Back | `catalog.spec` |
+| Feed: pauses on hover, focus, hidden tab, offline, Pause; 50 max | hover the list, switch tabs | `feed.spec` |
+| Wallet: balance, list, deposit + conversion, animation, failure | Deposit `100` → ok; `109` → error, rolled back | `wallet.spec` |
+| Promotions: scroll container, snap, swipe; Prev/Next on desktop | swipe on a phone | `promos.spec`; momentum by hand |
+| No spinners; all text from `src/i18n` | `?mock=slow`; Settings → Русский | `cssPolish`, `ru`; literals by review |
+| Command palette: jump to a game, toggle theme | `Ctrl/⌘ + K` | `palette.spec` |
 
 ## Hardest trade-offs
 1. **URL is the only filter state.** Filters `pushState`, search `replaceState` after 250 ms, so every view is a link and Back works. *Cost:* a pending debounce must be flushed or dropped on every push and `popstate`; unknown providers/tags are dropped only after the catalog loads (an extra `replaceState`).
@@ -49,8 +49,8 @@ Node: `npm install && npm start` needs `^20.19 || >=22.12` (Vite 8); `npm run ch
 - **H4:** Settings → Accent hue → the app recolors; DevTools: only `--accent-h` on `<html>` changes (`accent.spec`, `feedIsolation.test` "accent isolation").
 
 ## Assumptions (more in [NOTES.md](NOTES.md))
-- A deposit fails when the last digit of the **typed** amount is 9 (`,` = `.`): `10.9` fails, `10.90` succeeds, by design.
+- A deposit fails when the **typed** amount ends in 9 (`,` = `.`): `10.9` fails, `10.90` succeeds, by design.
 - "Transaction appears in the feed" = the wallet's own list. Fixed rates (USD 0.92, GBP 1.17 → EUR), 1–5000 per deposit.
 
 ## Proof
-`proof/palette.png`, `proof/offline.png`; riskiest line and "with a week" in NOTES.md.
+`proof/palette.png` (`Ctrl+K` → `live`), `proof/offline.png`. Riskiest line and "with a week": NOTES.md.
