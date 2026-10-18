@@ -380,6 +380,8 @@ describe('command palette in ru', () => {
     await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Поиск' }));
     await user.type(ruInput(), 'темн');
     expect(labels()[0]).toBe('Включить тёмную тему');
+    const marks = [...(within(ruPalette()).getAllByRole('option')[0]?.querySelectorAll('mark') ?? [])].map((m) => m.textContent);
+    expect(marks).toEqual(['тёмн']); // the highlight is on the original text, with its ё
 
     await user.clear(ruInput());
     await user.type(ruInput(), 'язык');

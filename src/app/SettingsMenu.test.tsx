@@ -72,6 +72,9 @@ describe('SettingsMenu', () => {
     const user = setupUser();
     renderMenu();
     await user.click(toggle());
+    // From the slider: user-event (unlike Chromium) leaves a focused select element focused on mousedown elsewhere.
+    // The select case runs in real Chromium: tests/e2e/accent.spec.ts.
+    await user.tab();
     await user.click(screen.getByText('Plain text'));
     expect(toggle().getAttribute('aria-expanded')).toBe('false');
     expect(document.activeElement).toBe(toggle());

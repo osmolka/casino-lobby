@@ -50,6 +50,15 @@ describe('fuzzyScore', () => {
     expect(fuzzyScore('тем ную', 'Включить тёмную тему')?.matches).toEqual([9, 10, 11, 12, 13, 14]); // subsequence folds too
   });
 
+  it('folding is 1:1 per UTF-16 unit: the highlight ranges cut the original text, ё included', () => {
+    const text = 'Включить тёмную тему';
+    const ranges = markRanges(fuzzyScore('темн', text)?.matches ?? []);
+    expect(ranges).toEqual([[9, 13]]);
+    expect(ranges.map(([start, end]) => text.slice(start, end))).toEqual(['тёмн']);
+    const upper = 'ЁЛКА ёлка';
+    expect(markRanges(fuzzyScore('елк', upper)?.matches ?? []).map(([s, e]) => upper.slice(s, e))).toEqual(['ЁЛК']);
+  });
+
   it('subsequence: tolerates missing letters (typos) and ignores spaces in the query', () => {
     expect(fuzzyScore('strbst', 'Starburst')).not.toBeNull();
     expect(fuzzyScore('crsh', 'Crystal Rush')).not.toBeNull();

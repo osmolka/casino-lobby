@@ -38,9 +38,7 @@ export function SettingsMenu() {
     const onClick = () => {
       if (!restoreOnClickRef.current) return;
       restoreOnClickRef.current = false;
-      const active = document.activeElement;
-      // On <body>, or still on a control in the now hidden panel (browsers without focus fixup).
-      if (active === null || active === document.body || panelRef.current?.contains(active)) toggleRef.current?.focus();
+      if (document.activeElement === document.body || document.activeElement === null) toggleRef.current?.focus();
     };
     document.addEventListener('pointerdown', onPointerDown, true);
     document.addEventListener('click', onClick);
