@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LOCALES, LOCALE_KEY } from '../i18n/locales';
 import { ACCENT_HUE_KEY } from './accent';
 import { THEME_KEY } from './theme';
+import { THEME_COLORS } from './themeColors';
 
 const script = /<script id="boot">([\s\S]*?)<\/script>/.exec(html)?.[1] ?? '';
 
@@ -19,7 +20,10 @@ function mockSystemDark(dark: boolean) {
   );
 }
 
+const themeColorMeta = () => document.querySelector('meta[name="theme-color"]');
+
 beforeEach(() => {
+  document.head.innerHTML = '<meta name="theme-color" content="#fff">';
   const root = document.documentElement;
   root.removeAttribute('data-theme');
   root.removeAttribute('style');
@@ -59,6 +63,23 @@ describe('index.html boot script', () => {
     runBoot();
     expect(document.documentElement.dataset.theme).toBe('dark');
     expect(document.documentElement.style.colorScheme).toBe('dark');
+  });
+
+  it('sets the theme-color meta to the applied theme (same colors as themeColors.ts)', () => {
+    const map = /var themeColors = (\{[^}]*\});/.exec(script)?.[1] ?? '';
+    const colors = [...map.matchAll(/(\w+):\s*'(#[0-9a-f]+)'/gi)].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(colors)).toEqual(THEME_COLORS);
+
+    mockSystemDark(false);
+    localStorage.setItem(THEME_KEY, 'dark');
+    runBoot();
+    expect(themeColorMeta()?.getAttribute('content')).toBe(THEME_COLORS.dark);
+    expect(document.querySelectorAll('meta[name="theme-color"]')).toHaveLength(1);
+  });
+
+  it('index.html has exactly one theme-color meta, before the boot script', () => {
+    expect(html.match(/<meta name="theme-color"/g)).toHaveLength(1);
+    expect(html.indexOf('name="theme-color"')).toBeLessThan(html.indexOf('<script id="boot">'));
   });
 
   it('falls back to prefers-color-scheme, then to en/ltr', () => {

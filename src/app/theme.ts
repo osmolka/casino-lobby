@@ -1,4 +1,5 @@
 import { storageGet, storageSet } from '../shared/storage';
+import { THEME_COLORS } from './themeColors';
 
 export type Theme = 'light' | 'dark';
 
@@ -31,4 +32,6 @@ export function resolveTheme(): Theme {
 export function applyTheme(theme: Theme, root: HTMLElement = document.documentElement): void {
   root.dataset.theme = theme;
   root.style.colorScheme = theme;
+  // The one theme-color meta (index.html) follows the manual theme, as the boot script set it on load.
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[theme]);
 }

@@ -1,6 +1,7 @@
 import { delay } from '../../shared/delay';
 import { getMockFlags } from '../../shared/mockFlags';
-import { loadGames } from '../catalog/api';
+import { canUseSavedCatalog, loadGames, readCachedCatalog } from '../catalog/api';
+import type { Game } from '../catalog/types';
 import type { FeedGame } from './types';
 
 const MIN_DELAY_MS = 400;
@@ -32,11 +33,15 @@ export async function connectFeed(options: ConnectFeedOptions = {}): Promise<Fee
   if (mock.has('fail-feed')) throw new FeedError('fail-feed');
   if (mock.has('empty-feed')) return [];
 
+  let games: Game[];
   try {
-    const games = await loadGames(signal);
-    return games.map(({ id, title }) => ({ id, title }));
+    games = await loadGames(signal);
   } catch (error) {
     if (signal?.aborted) throw error;
-    throw new FeedError('load', { cause: error });
+    // Same rule as the catalog, so offline both show the same saved games.
+    const saved = canUseSavedCatalog(error) ? readCachedCatalog() : null;
+    if (!saved) throw new FeedError('load', { cause: error });
+    games = saved.games;
   }
+  return games.map(({ id, title }) => ({ id, title }));
 }

@@ -92,6 +92,13 @@ export const en = {
       invalid: 'The game list came back damaged. Try again.',
     },
     retry: 'Try again',
+    // One status line under the h1, worded by cause (navigator.onLine). {time}: formatSavedAt.
+    network: {
+      offline: 'You are offline. Live wins and deposits are paused until the connection is back.',
+      offlineSaved: 'You are offline. Showing games saved at {time}.',
+      staleSaved: 'Could not refresh the games. Showing games saved at {time}.',
+      loaded: 'Catalog loaded',
+    },
     count: {
       one: '{count} game',
       other: '{count} games',

@@ -19,7 +19,7 @@ function viewState(page: Page): Promise<ViewState> {
     return {
       url: location.search + location.hash,
       names: [...document.querySelectorAll('main a[href^="#game-"]')].map(name),
-      count: document.querySelector('main [role=status]')?.textContent ?? '',
+      count: document.querySelector('main [role=status][aria-live]')?.textContent ?? '',
       pressed: [...document.querySelectorAll('main [aria-pressed=true]')].map((b) => b.textContent),
       checked: [...document.querySelectorAll<HTMLInputElement>('main input[type=checkbox]:checked')].map(
         (i) => i.parentElement?.textContent ?? '',
@@ -35,7 +35,7 @@ const view = (s: ViewState): Omit<ViewState, 'url'> => ({ names: s.names, count:
 
 async function ready(page: Page) {
   await expect(page.locator('main [aria-busy="true"]')).toHaveCount(0);
-  await expect(page.locator('main [role=status]')).not.toHaveText('');
+  await expect(page.locator('main [role=status][aria-live]')).not.toHaveText('');
 }
 
 const group = (page: Page, name: string) => page.getByRole('group', { name });
@@ -141,13 +141,15 @@ test('empty state: Clear filters restores defaults incl. sort, keeps mock, focus
 });
 
 test('error state: Retry shows the skeleton and focuses the heading', async ({ page, lobby }) => {
-  await lobby.goto('/?mock=fail-catalog');
-  const alert = page.getByRole('alert');
+  // fail-feed too: the feed's own games request would save catalog:v1, and Retry would then (rightly) show
+  // that saved catalog instead of the error (H2 rule 2).
+  await lobby.goto('/?mock=fail-catalog,fail-feed');
+  const alert = page.getByRole('main').getByRole('alert');
   await expect(alert).toContainText('Could not reach the server');
   await alert.getByRole('button', { name: 'Try again' }).click();
   await expect(page.locator('main [aria-busy="true"]')).toHaveCount(1);
   await expect(page.getByRole('heading', { level: 1, name: 'Games' })).toBeFocused();
-  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(alert).toBeVisible();
 });
 
 for (const scheme of ['light', 'dark'] as const) {

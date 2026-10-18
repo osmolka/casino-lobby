@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { THEME_KEY, applyTheme, readStoredTheme, resolveTheme, storeTheme } from './theme';
+import { THEME_COLORS } from './themeColors';
 
 function mockSystemDark(dark: boolean) {
   vi.spyOn(window, 'matchMedia').mockImplementation(
@@ -48,5 +49,16 @@ describe('theme', () => {
     applyTheme('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
     expect(document.documentElement.style.colorScheme).toBe('dark');
+  });
+
+  it('keeps the one theme-color meta in sync with the manual theme', () => {
+    document.head.innerHTML = '<meta name="theme-color" content="#fff">';
+    const meta = () => document.querySelector('meta[name="theme-color"]')?.getAttribute('content');
+    applyTheme('dark');
+    expect(meta()).toBe(THEME_COLORS.dark);
+    applyTheme('light');
+    expect(meta()).toBe(THEME_COLORS.light);
+    expect(document.querySelectorAll('meta[name="theme-color"]')).toHaveLength(1);
+    document.head.innerHTML = '';
   });
 });

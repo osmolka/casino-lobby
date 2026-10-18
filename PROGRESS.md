@@ -3,8 +3,8 @@
 Keep this file under ~60 lines. Summarize; do not log every step. Update at the end of each phase. Status values: `todo`, `in progress`, `done`, `blocked`, `dropped`.
 
 ## Status
-- done: 1 scaffold/themes/i18n/layout/fixture · 2a catalog data/filters/URL · 2b catalog UI · 3 wallet/deposit · 4 live feed · 5a fuzzy.ts + command palette (H3) · 5b promos, polish · 6a H4 accent + H1 Russian (commits `phase <id>: …`)
-- todo: 6b H2 PWA · 6c H5 jackpot (only if approved) · 7 QA, RTL, docs
+- done: 1 scaffold/themes/i18n/layout/fixture · 2a catalog data/filters/URL · 2b catalog UI · 3 wallet/deposit · 4 live feed · 5a fuzzy.ts + command palette (H3) · 5b promos, polish · 6a H4 accent + H1 Russian · 6b H2 PWA (commits `phase <id>: …`)
+- todo: 6c H5 jackpot (only if approved) · 7 QA, RTL, docs
 
 ## Decisions and deviations from PLAN.md (phase — decision — reason)
 - 1 — Pinned TS 6.0.3 / ESLint 9.39.5 (not latest 7.x / 10.x) — typescript-eslint needs TS <6.1; jsx-a11y supports ESLint ≤9. React 18.3.1 per §2.
@@ -58,11 +58,19 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - 6a H1 — Settings focus order: **Language select → hue slider → Reset** (the select is the first control and gets focus on open). Palette: `fuzzy.ts` folds ё → е, **palette only** (catalog search does not fold); 1:1 per UTF-16 unit, so `markRanges` indices cut the original text (test: highlight «тёмн» for `темн`). The language action lists only the other locale; with it, the empty-query list (max 10) pushes the last provider out (intended). Failure rule is locale independent: ru «10,90» succeeds like en 10.90, «10,9» fails like 10.9 (Wallet.test, ru).
 - 6a H1 — e2e: `catalog.spec` `viewState` reads `main select` (the Language select is now first in the DOM). `ru.spec.ts`: switch + reload (lang before any stylesheet), plural count, 360px phone layout (filters, deposit dialog, settings, palette: no overflow, targets ≥ 24, longest option fits), axe light/dark. Language select added to the chevron-gap test (within 0.5px).
 
+- 6b H2 — `vite-plugin-pwa` 2.0.0 + `@vite-pwa/assets-generator` 2.0.0 exact (peers allow vite 8, both > 14 days old). `generateSW`, `autoUpdate`, `injectRegister: false` → `skipWaiting`/`clientsClaim` set by hand (the plugin sets them only for `auto`). `src/pwa/register.ts`: dynamic `virtual:pwa-register` only when `import.meta.env.PROD`; `devOptions.enabled: false` (dev checked: no registration, no manifest link, console clean). Precache 15 entries: shell, JS, CSS, woff2, PNG icons, favicon, `api/promos.json`; `games.json` excluded, no runtimeCaching, `navigateFallbackDenylist /^\/api\//`. Icons from `public/icons/icon.svg` (`pwa-assets.config.ts`, custom preset, no .ico), committed.
+- 6b H2 — `fetchCatalog` → `{games, savedAt}`: network/http error + catalog:v1 → saved copy (`invalid` keeps its error). The copy is **snapshotted when the attempt starts**: otherwise the feed's own games request saves one during the delay and `?mock=fail-catalog` turns racy. `loadGames` uses `cache: 'no-cache'` (offline data only from catalog:v1). Feed falls back to catalog:v1 titles by the same rule. `useCatalog`: auto-refetch on `online` after error **and** saved copy (user, option 1); one request in flight (ref set in `retry`, aborted per attempt); a saved copy stays visible while refetching; `restored` → sr-only "Catalog loaded" (cleared on `offline`).
+- 6b H2 — `NetworkBanner` (after the h1): the only connectivity message; one `<p role=status>` always in the DOM; text by `navigator.onLine`: offline / offline + saved time / "could not refresh" + saved time, Retry when a copy is shown. `RetryButton` + `useFocusFallback`: a Retry removed while focused hands focus to the h1 (layout cleanup runs before DOM removal); focus elsewhere untouched (mutation-checked). `formatSavedAt`: time only for today. theme-color: one meta, set by the boot script and `applyTheme` from `themeColors.ts` (= `--surface`); manifest (`src/pwa/manifest.ts`) static en, colors from tokens (tests).
+- 6b e2e — `serviceWorkers: 'block'` for every spec; `pwa.spec.ts` allows them + `allowedFailures: ['/api/games.json']` (fixture option: the failed request and its "Failed to load resource" line only). Playwright logs its own "Service Worker registration blocked by Playwright" warning under `block`: ignored by exact text, only then. CDP sessions are detached at once: while one is attached a reloaded page reports `navigator.onLine` true under `setOffline`. Count status selector now `main [role=status][aria-live]`. Suite: 104 tests, 51 s including build.
+
 ## Open issues
 - `npm audit`: 8 high, dev-only (braces via stylelint → globby/fast-glob), no fix upstream; `npm audit --omit=dev` = 0.
 - Dev server shows unstyled content briefly (Vite injects CSS via JS in dev); theme attr is already correct. Preview/prod has no flash.
 
 ## For README (assumptions)
+- H2: the web manifest is static (en name, light colors) and does not follow the language or theme; the `theme-color` meta does follow the theme.
+- H2 runbook step 3 (PLAN §9.2, rewritten): clear local storage only (a full "Clear site data" also unregisters the SW → no shell offline) → Offline → reload → error with Retry (Retry while offline keeps the error) → online → the catalog loads automatically; Retry covers a reachable network with a failing server.
+- H2: `?mock=fail-catalog` with a catalog saved by an earlier visit shows that copy + "could not refresh" banner (rule 2), not the error state.
 - Transactions appear in the wallet's own recent-transactions list, not the live feed.
 - Deposit fails when the last digit of the entered amount text is 9 (`,` = `.`, zeros kept): `19`, `10.99`, `10.9` fail; `90`, `9.50`, `10.90` succeed. `10.9` and `10.90` are the same amount with different outcomes, by design: the rule reads what was typed.
 - Rates are fixed (USD 0.92, GBP 1.17 → EUR). Limits 1–5000 per deposit in the chosen currency.
@@ -74,6 +82,8 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 - H3 runbook line: Ctrl+K (⌘K) → `frz vlt` → Enter → the "Frozen Vault XL" card is focused (pinned in `fuzzy.test.ts`; also `imm bj` → Immersive Blackjack). A game outside the current filters → its title becomes the search (Back restores).
 
 ## For NOTES.md ("with a week")
+- PWA updates: `autoUpdate` reloads open tabs when a new SW activates; a deposit in flight is lost (wallet stays consistent: pending never persisted, test in Wallet.test). With a week: prompt mode + defer the update while a deposit is pending (`onNeedReload`).
+- Feed after an offline start keeps the saved titles until it reconnects (it does not refetch on `online`).
 - Card a11y: restructure as heading link (title) + separate details, so the accessible name is shorter.
 - Search: accent/diacritic folding (`normalize('NFD')`) and locale-aware matching.
 - Feed: dedupe the concurrent `api/games.json` requests (shared in-flight promise with per-caller abort).
@@ -88,9 +98,9 @@ Keep this file under ~60 lines. Summarize; do not log every step. Update at the 
 
 ## Bonus claim status (H1–H5: claimed / not claimed + one-line reason; filled in phases 6–7)
 - H1: claimed — complete ru dictionary (type-checked, copy-paste guard), Russian plurals, switcher in Settings + palette action, persisted, lang/title applied; 360px layout checked in ru.
+- H2: claimed — installable (CDP: no manifest or installability errors), offline shell from precache, catalog from catalog:v1 with a cause-worded banner, auto-refetch on online; all 4 runbook steps are e2e tests (`pwa.spec.ts`).
 - H4: claimed — hue slider in Settings, persisted and applied before render; every hue 0–359 AA in both themes (tokens.test + rendered-pixel e2e), axe at 0/60/…/300.
 
 ## Next
 - E2E time budget: ~75 s including build (6b adds offline checks; now ~48 s, 98 tests). Keep tests parallel-safe (own context, no shared state) and waiting on concrete states, never fixed sleeps.
-- 6b: every new string (offline banner, "showing data from {time}", update prompt, retry texts) goes into both `en` and `ru`; ru.test (copy-paste guard, placeholders, plural forms) must pass.
-- Phase 6b: on an offline reload the feed falls back to `catalog:v1` for titles, so catalog and feed agree. Consider one shared in-flight games request (cleared on failure) if it stays simple. Promos offline: precache `api/promos.json` in the SW or give promos a fallback (e.g. `promos:v1`), so catalog and promos agree offline.
+- Shared in-flight games request (catalog + feed) still not done: two requests per load (NOTES item stands).

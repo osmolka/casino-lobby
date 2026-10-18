@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { Catalog } from './Catalog';
 import { CatalogProvider } from './CatalogProvider';
@@ -98,7 +98,9 @@ const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&
 /** Each name starts with title + provider; the rest (tags, RTP, bets) is covered by the card test. */
 const expectedNames = (search: string): unknown[] =>
   selectGames(games, parseFilters(search)).map((g): unknown => expect.stringMatching(new RegExp(`^${escapeRegExp(g.title + g.providerName)}`)));
-const status = () => screen.getByRole('status');
+// Two status regions in DOM order: the network banner (right after the h1), then the result count.
+const banner = () => screen.getAllByRole('status')[0] as HTMLElement;
+const status = () => screen.getAllByRole('status')[1] as HTMLElement;
 const pressed = (group: string, name: string) =>
   within(screen.getByRole('group', { name: group })).getByRole('button', { name }).getAttribute('aria-pressed');
 const heading = () => screen.getByRole('heading', { level: 1, name: 'Games' });
@@ -311,5 +313,133 @@ describe('Catalog', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(screen.getAllByRole('link')).toHaveLength(6);
     expect(error).not.toHaveBeenCalled();
+  });
+});
+
+describe('network banner (H2)', () => {
+  const SAVED_AT = new Date(2026, 9, 16, 9, 5).getTime();
+  const saved = [makeGame({ id: 's1', title: 'Saved Only' })];
+  let onLine: MockInstance<() => boolean>;
+  const down = () => Promise.reject(new TypeError('Failed to fetch'));
+  const ok = () => Promise.resolve(jsonResponse(games));
+  const spaces = (text: string | null) => (text ?? '').replace(/\s/g, ' ');
+
+  beforeEach(() => {
+    vi.setSystemTime(new Date(2026, 9, 16, 12, 0));
+    onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+  });
+
+  function saveCatalog() {
+    localStorage.setItem('catalog:v1', JSON.stringify({ fetchedAt: SAVED_AT, games: saved }));
+  }
+
+  function network(online: boolean) {
+    onLine.mockReturnValue(online);
+    act(() => {
+      window.dispatchEvent(new Event(online ? 'online' : 'offline'));
+    });
+  }
+
+  const retryIn = (el: HTMLElement) => within(el.parentElement as HTMLElement).queryByRole('button', { name: 'Try again' });
+
+  it('is an empty status region while online with fresh data', async () => {
+    renderCatalog();
+    expect(banner().textContent).toBe('');
+    await load();
+    expect(banner().textContent).toBe('');
+    expect(retryIn(banner())).toBeNull();
+  });
+
+  it('offline with a saved catalog: the saved games, worded as offline, with the saved time and Retry', async () => {
+    saveCatalog();
+    onLine.mockReturnValue(false);
+    fetchMock.mockImplementation(down);
+    renderCatalog();
+    expect(banner().textContent).toBe('You are offline. Live wins and deposits are paused until the connection is back.');
+    await load();
+    expect(spaces(banner().textContent)).toBe('You are offline. Showing games saved at 9:05 AM.');
+    expect(retryIn(banner())).not.toBeNull();
+    expect(cardNames()).toEqual([expect.stringMatching(/^Saved Only/)]);
+  });
+
+  it('online but the request failed: worded as a failed refresh, one source only', async () => {
+    saveCatalog();
+    fetchMock.mockImplementation(() => Promise.resolve(new Response('', { status: 503 })));
+    renderCatalog();
+    await load();
+    expect(spaces(banner().textContent)).toBe('Could not refresh the games. Showing games saved at 9:05 AM.');
+    expect(screen.getAllByText(/Showing games saved/)).toHaveLength(1);
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('back online: reloads automatically, announces "Catalog loaded", focus on the vanished Retry goes to the h1', async () => {
+    saveCatalog();
+    onLine.mockReturnValue(false);
+    fetchMock.mockImplementation(down);
+    renderCatalog('', { strict: true });
+    await load();
+    const retry = retryIn(banner());
+    retry?.focus();
+    expect(document.activeElement).toBe(retry);
+
+    fetchMock.mockImplementation(ok);
+    network(true);
+    await load();
+    expect(retryIn(banner())).toBeNull();
+    expect(banner().textContent).toBe('Catalog loaded');
+    expect(screen.getAllByRole('link')).toHaveLength(6);
+    expect(document.activeElement).toBe(heading());
+  });
+
+  it('back online: focus elsewhere stays where it is', async () => {
+    saveCatalog();
+    onLine.mockReturnValue(false);
+    fetchMock.mockImplementation(down);
+    renderCatalog();
+    await load();
+    const search = screen.getByRole('searchbox', { name: 'Search games' });
+    search.focus();
+
+    fetchMock.mockImplementation(ok);
+    network(true);
+    await load();
+    expect(screen.getAllByRole('link')).toHaveLength(6);
+    expect(document.activeElement).toBe(search);
+  });
+
+  it('error state offline: Retry keeps the error and focuses the h1; online reloads without a click', async () => {
+    onLine.mockReturnValue(false);
+    fetchMock.mockImplementation(down);
+    renderCatalog();
+    await load();
+    const alert = screen.getByRole('alert');
+    fireEvent.click(within(alert).getByRole('button', { name: 'Try again' }));
+    expect(document.activeElement).toBe(heading());
+    await load();
+    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(document.activeElement).toBe(heading());
+
+    // Focus back on the error Retry: the automatic reload removes it, focus goes to the h1.
+    within(screen.getByRole('alert')).getByRole('button', { name: 'Try again' }).focus();
+    fetchMock.mockImplementation(ok);
+    network(true);
+    expect(document.activeElement).toBe(heading());
+    await load();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getAllByRole('link')).toHaveLength(6);
+    expect(banner().textContent).toBe('Catalog loaded');
+  });
+
+  it('banner Retry online: refreshes in place (saved games stay meanwhile)', async () => {
+    saveCatalog();
+    fetchMock.mockImplementation(down);
+    renderCatalog();
+    await load();
+    fetchMock.mockImplementation(ok);
+    fireEvent.click(retryIn(banner()) as HTMLElement);
+    expect(cardNames()).toEqual([expect.stringMatching(/^Saved Only/)]);
+    await load();
+    expect(screen.getAllByRole('link')).toHaveLength(6);
+    expect(banner().textContent).toBe('Catalog loaded');
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currencyName, formatDateTime, formatMoney, formatMoneyRange, formatPercent, formatRelativeTime, minorToDecimal } from './format';
+import { currencyName, formatDateTime, formatMoney, formatMoneyRange, formatPercent, formatRelativeTime, formatSavedAt, minorToDecimal } from './format';
 
 describe('minorToDecimal', () => {
   it('converts integer minor units to an exact decimal string', () => {
@@ -80,5 +80,25 @@ describe('formatRelativeTime', () => {
   it('uses whole hours from an hour on', () => {
     expect(formatRelativeTime(now - 60 * 60_000, now, 'en')).toBe('1 hour ago');
     expect(formatRelativeTime(now - 26 * 60 * 60_000, now, 'en')).toBe('26 hours ago');
+  });
+});
+
+describe('formatSavedAt', () => {
+  // Local dates: "today" is the viewer's calendar day, whatever the time zone.
+  const now = new Date(2026, 9, 16, 18, 30).getTime();
+  const spaces = (text: string) => text.replace(/\s/g, ' ');
+
+  it('shows only the time for a save from today', () => {
+    expect(spaces(formatSavedAt(new Date(2026, 9, 16, 14, 5).getTime(), now, 'en'))).toBe('2:05 PM');
+    expect(formatSavedAt(new Date(2026, 9, 16, 0, 0).getTime(), now, 'ru')).toBe('00:00');
+  });
+
+  it('adds the date for an earlier day', () => {
+    expect(spaces(formatSavedAt(new Date(2026, 9, 15, 9, 7).getTime(), now, 'en'))).toBe('Oct 15, 2026, 9:07 AM');
+    expect(spaces(formatSavedAt(new Date(2026, 9, 15, 23, 59).getTime(), now, 'ru'))).toBe('15 окт. 2026 г., 23:59');
+  });
+
+  it('treats a save "from the future" (clock change) like any other day', () => {
+    expect(spaces(formatSavedAt(new Date(2026, 9, 17, 9, 7).getTime(), now, 'en'))).toBe('Oct 17, 2026, 9:07 AM');
   });
 });

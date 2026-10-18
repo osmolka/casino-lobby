@@ -449,7 +449,7 @@ See "Runbook of proof" below and /proof.
 - **H2:** `npm run start:pwa`
   1. DevTools → Application → Manifest: installable, icons present.
   2. Open the lobby → Network → Offline → reload: shell and catalog are present, banner "Offline — showing data from …".
-  3. Application → Clear site data → Offline → reload: error state with retry; go online → Retry → catalog loads.
+  3. Application → Local storage → clear it (keep the service worker: a full "Clear site data" also unregisters it, then offline has no shell) → Offline → reload: error state with Retry (Retry while offline keeps the error); go online → the catalog loads automatically. Retry covers a reachable network with a failing server.
   4. Online, Network → Block request URL `/api/games.json` → reload: saved catalog + banner (failed fetch while the network is up).
 - **H3:** `Ctrl/Cmd+K` → type `bk drd` (or an equivalent from the reference tests) → ranked list with highlighting; select with arrows and Enter.
 - **H4:** settings menu → hue slider → the whole theme recolors; DevTools → `:root` → only `--accent-h` changes; React DevTools "Highlight updates" does not flash the tree.

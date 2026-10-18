@@ -12,6 +12,8 @@ export default defineConfig({
   use: {
     baseURL: external ?? `http://localhost:${PREVIEW_PORT}`,
     trace: 'retain-on-failure',
+    // No SW unless a spec opts in (pwa.spec.ts): an SW from an earlier load must not serve later navigations.
+    serviceWorkers: 'block',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   ...(external

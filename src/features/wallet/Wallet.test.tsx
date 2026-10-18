@@ -403,6 +403,28 @@ describe('robustness', () => {
     expect(stored().every((t) => t.status === 'confirmed')).toBe(true);
   });
 
+  // H2 autoUpdate reloads open tabs when a new service worker activates, possibly mid-deposit.
+  it('a reload in the middle of a deposit leaves the wallet consistent: no pending stored, balance = sum of confirmed', async () => {
+    const first = await loaded();
+    openDeposit();
+    fill('100');
+    fireEvent.click(confirmButton());
+    expect(balance().textContent).toContain('€795.25'); // optimistic, pending
+    const stored = JSON.parse(localStorage.getItem(WALLET_STORAGE_KEY) ?? '[]') as { status: string; amount: number }[];
+    expect(stored.every((t) => t.status === 'confirmed')).toBe(true);
+    const confirmedSum = stored.reduce((sum, t) => sum + t.amount, 0);
+    expect(confirmedSum).toBe(69_525);
+
+    first.unmount(); // the reload: the in-flight request dies with the page
+    await loaded();
+    expect(balance().textContent).toContain('Balance: €695.25');
+    expect(rows()).toHaveLength(5);
+    expect(rows().some((row) => row.includes('Pending'))).toBe(false);
+    await advance(DEPOSIT_DELAY_MS); // nothing from the old page applies later
+    expect(balance().textContent).toContain('Balance: €695.25');
+    expect(localStorage.getItem(WALLET_STORAGE_KEY)).toBe(JSON.stringify(stored));
+  });
+
   it('?mock=empty-wallet never writes storage', async () => {
     await loaded('?mock=empty-wallet');
     openDeposit();

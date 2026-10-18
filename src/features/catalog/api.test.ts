@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CATALOG_CACHE_KEY, CatalogError, fetchCatalog } from './api';
+import { CATALOG_CACHE_KEY, CatalogError, fetchCatalog, readCachedCatalog } from './api';
 import { makeGame } from './testGames';
 
 const games = [makeGame({ id: 'g1' }), makeGame({ id: 'g2', category: 'live' })];
@@ -47,9 +47,16 @@ describe('fetchCatalog', () => {
     await vi.advanceTimersByTimeAsync(399);
     expect(fetchMock).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1);
-    await expect(promise).resolves.toEqual(games);
+    await expect(promise).resolves.toEqual({ games, savedAt: null });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/games.json');
+  });
+
+  it('revalidates with the server instead of reading the HTTP cache (catalog:v1 is the only offline copy)', async () => {
+    const { promise } = start();
+    await vi.advanceTimersByTimeAsync(400);
+    await promise;
+    expect(fetchMock.mock.calls[0]?.[1]?.cache).toBe('no-cache');
   });
 
   it('keeps the delay within 400–900 ms', async () => {
@@ -57,7 +64,7 @@ describe('fetchCatalog', () => {
     await vi.advanceTimersByTimeAsync(899);
     expect(fetchMock).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1);
-    await expect(promise).resolves.toEqual(games);
+    await expect(promise).resolves.toEqual({ games, savedAt: null });
   });
 
   it('adds extra delay with ?mock=slow', async () => {
@@ -82,14 +89,14 @@ describe('fetchCatalog', () => {
     });
     const { promise } = start();
     await vi.advanceTimersByTimeAsync(400);
-    await expect(promise).resolves.toEqual(games);
+    await expect(promise).resolves.toEqual({ games, savedAt: null });
   });
 
   it('accepts an empty catalog', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse([]));
     const { promise } = start();
     await vi.advanceTimersByTimeAsync(400);
-    await expect(promise).resolves.toEqual([]);
+    await expect(promise).resolves.toEqual({ games: [], savedAt: null });
   });
 
   it('maps a fetch rejection (TypeError) to kind "network"', async () => {
@@ -158,6 +165,111 @@ describe('fetchCatalog', () => {
     await vi.advanceTimersByTimeAsync(400);
     const result = await settled;
     expect((result as { error: unknown }).error).not.toBeInstanceOf(CatalogError);
+    expect((result as { error: DOMException }).error.name).toBe('AbortError');
+  });
+});
+
+const SAVED_AT = Date.parse('2026-10-15T08:00:00.000Z');
+const savedGames = [makeGame({ id: 'saved-1', title: 'Saved Only' })];
+
+function saveCatalog(value: unknown = { fetchedAt: SAVED_AT, games: savedGames }) {
+  localStorage.setItem(CATALOG_CACHE_KEY, typeof value === 'string' ? value : JSON.stringify(value));
+}
+
+describe('readCachedCatalog', () => {
+  it('returns the saved games and when they were fetched', () => {
+    saveCatalog();
+    expect(readCachedCatalog()).toEqual({ fetchedAt: SAVED_AT, games: savedGames });
+  });
+
+  it('returns null when nothing is saved', () => {
+    expect(readCachedCatalog()).toBeNull();
+  });
+
+  it.each([
+    ['not JSON', '{oops'],
+    ['an array', [savedGames]],
+    ['no fetchedAt', { games: savedGames }],
+    ['a string fetchedAt', { fetchedAt: '2026-10-15', games: savedGames }],
+    ['a non-finite fetchedAt', { fetchedAt: null, games: savedGames }],
+    ['games not an array', { fetchedAt: SAVED_AT, games: {} }],
+    ['an invalid game', { fetchedAt: SAVED_AT, games: [{ ...savedGames[0], rtp: '96' }] }],
+  ])('returns null for %s', (_label, value) => {
+    saveCatalog(value);
+    expect(readCachedCatalog()).toBeNull();
+  });
+
+  it('returns null when localStorage throws', () => {
+    saveCatalog();
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('denied', 'SecurityError');
+    });
+    expect(readCachedCatalog()).toBeNull();
+  });
+});
+
+describe('fetchCatalog offline fallback (catalog:v1)', () => {
+  it('serves the saved catalog with savedAt when fetch rejects', async () => {
+    saveCatalog();
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    const { promise } = start();
+    await vi.advanceTimersByTimeAsync(400);
+    await expect(promise).resolves.toEqual({ games: savedGames, savedAt: SAVED_AT });
+  });
+
+  it('serves the saved catalog when the response is not ok', async () => {
+    saveCatalog();
+    fetchMock.mockResolvedValueOnce(jsonResponse({ error: 'boom' }, 503));
+    const { promise } = start();
+    await vi.advanceTimersByTimeAsync(400);
+    await expect(promise).resolves.toEqual({ games: savedGames, savedAt: SAVED_AT });
+  });
+
+  it('serves the saved catalog for ?mock=fail-catalog (H2 demo without DevTools)', async () => {
+    saveCatalog();
+    const { promise } = start({ search: '?mock=fail-catalog' });
+    await vi.advanceTimersByTimeAsync(400);
+    await expect(promise).resolves.toEqual({ games: savedGames, savedAt: SAVED_AT });
+  });
+
+  it('uses only a copy saved before the attempt started (the feed saving one meanwhile does not count)', async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    const { settled } = start();
+    saveCatalog(); // e.g. the live feed's own games request finished during the delay
+    await vi.advanceTimersByTimeAsync(400);
+    await expectCatalogError(settled, 'network');
+  });
+
+  it('keeps the "invalid" error: a damaged response is not a connectivity problem', async () => {
+    saveCatalog();
+    fetchMock.mockResolvedValueOnce(new Response('<html>', { status: 200 }));
+    const { settled } = start();
+    await vi.advanceTimersByTimeAsync(400);
+    await expectCatalogError(settled, 'invalid');
+  });
+
+  it('fails as before when nothing usable is saved', async () => {
+    saveCatalog('{oops');
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    const { settled } = start();
+    await vi.advanceTimersByTimeAsync(400);
+    await expectCatalogError(settled, 'network');
+  });
+
+  it('a fresh response replaces the saved copy and has savedAt null', async () => {
+    saveCatalog();
+    const { promise } = start();
+    await vi.advanceTimersByTimeAsync(400);
+    await expect(promise).resolves.toEqual({ games, savedAt: null });
+    expect(readCachedCatalog()?.games).toEqual(games);
+  });
+
+  it('still rethrows an abort instead of falling back', async () => {
+    saveCatalog();
+    const controller = new AbortController();
+    const { settled } = start({ signal: controller.signal });
+    controller.abort();
+    const result = await settled;
     expect((result as { error: DOMException }).error.name).toBe('AbortError');
   });
 });

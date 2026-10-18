@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CATALOG_CACHE_KEY } from '../catalog/api';
 import { makeGame } from '../catalog/testGames';
 import { FeedError, connectFeed } from './api';
 
@@ -60,6 +61,26 @@ describe('connectFeed', () => {
 
   it('turns a failed load into FeedError', async () => {
     fetchMock.mockResolvedValue(new Response('nope', { status: 500 }));
+    const settled = start();
+    await vi.advanceTimersByTimeAsync(400);
+    const result = await settled;
+    expect(result.ok ? null : result.error).toBeInstanceOf(FeedError);
+  });
+
+  it.each([
+    ['a rejected fetch', () => Promise.reject(new TypeError('Failed to fetch'))],
+    ['a 503', () => Promise.resolve(new Response('nope', { status: 503 }))],
+  ])('falls back to the titles saved in catalog:v1 after %s (agrees with the offline catalog)', async (_label, impl) => {
+    localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify({ fetchedAt: 1, games: [makeGame({ id: 's1', title: 'Saved Only' })] }));
+    fetchMock.mockImplementation(impl);
+    const settled = start();
+    await vi.advanceTimersByTimeAsync(400);
+    expect(await settled).toEqual({ ok: true, value: [{ id: 's1', title: 'Saved Only' }] });
+  });
+
+  it('does not fall back for a damaged response', async () => {
+    localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify({ fetchedAt: 1, games }));
+    fetchMock.mockResolvedValue(new Response('<html>', { status: 200 }));
     const settled = start();
     await vi.advanceTimersByTimeAsync(400);
     const result = await settled;

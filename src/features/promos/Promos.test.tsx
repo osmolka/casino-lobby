@@ -114,7 +114,7 @@ describe('Promos', () => {
     expect(window.history.length).toBe(before + 1);
     await advance(0);
     expect(document.activeElement).toBe(gamesHeading());
-    expect(screen.getByRole('status').textContent).toBe('20 games');
+    expect(screen.getAllByRole('status').map((el) => el.textContent)).toContain('20 games'); // banner + count
     expect(screen.getByRole<HTMLInputElement>('searchbox').value).toBe('');
   });
 

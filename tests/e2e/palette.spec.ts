@@ -31,7 +31,7 @@ const lastCardScroll = (page: Page) =>
 
 async function ready(page: Page) {
   await expect(page.locator('main [aria-busy="true"]')).toHaveCount(0);
-  await expect(page.locator('main [role=status]')).not.toHaveText('');
+  await expect(page.locator('main [role=status][aria-live]')).not.toHaveText('');
 }
 
 const palette = (page: Page) => page.getByRole('dialog', { name: 'Search and commands' });

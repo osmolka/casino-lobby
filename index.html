@@ -4,8 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
+    <!-- Browser UI color; the boot script and applyTheme set it to the chosen theme (src/app/themeColors.ts). -->
+    <meta name="theme-color" content="#fff" />
     <title>Lucky Lobby — Casino games</title>
-    <!-- Runs before any CSS: sets theme, lang and dir so there is no flash. Keys: src/app/theme.ts, src/i18n/locales.ts, src/app/accent.ts. -->
+    <!-- Runs before any CSS: sets theme, lang and dir so there is no flash. Keys: src/app/theme.ts (colors: themeColors.ts), src/i18n/locales.ts, src/app/accent.ts. -->
     <script id="boot">
       (function () {
         var root = document.documentElement;
@@ -24,6 +26,9 @@
         if (!Object.prototype.hasOwnProperty.call(locales, locale)) locale = 'en';
         root.setAttribute('data-theme', theme);
         root.style.colorScheme = theme;
+        var themeColors = { light: '#fff', dark: '#1a1d27' };
+        var themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) themeColor.setAttribute('content', themeColors[theme]);
         root.lang = locale;
         root.dir = locales[locale];
         // Accent hue: a whole degree 0–359 (same rule as parseHue); otherwise tokens.css keeps its default.
@@ -31,6 +36,7 @@
       })();
     </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180x180.png" />
     <!-- No font preload: on repeat navigations Chrome serves @font-face from its memory cache and warns that
          the preload was unused. font-display: swap covers the first load. -->
   </head>

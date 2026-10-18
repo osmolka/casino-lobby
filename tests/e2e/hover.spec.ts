@@ -82,6 +82,10 @@ for (const scheme of ['light', 'dark'] as const) {
     expect(await axeWithHover(page, forcer, hovered), 'axe').toEqual([]);
     await forcer.detach();
 
+    // No saved catalog (the first visit wrote catalog:v1), so fail-catalog shows the error state, not the copy.
+    await page.evaluate(() => {
+      localStorage.clear();
+    });
     await page.goto('/?mock=fail-catalog');
     const retryForcer = await stateForcer(page);
     await checkTarget(page, retryForcer, RETRY);

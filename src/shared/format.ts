@@ -48,6 +48,7 @@ export function formatPercent(value: number, locale: string): string {
 }
 
 const dateTimeFormats = new Map<string, Intl.DateTimeFormat>();
+const timeFormats = new Map<string, Intl.DateTimeFormat>();
 const currencyNames = new Map<string, Intl.DisplayNames>();
 
 export function formatDateTime(iso: string, locale: string): string {
@@ -57,6 +58,18 @@ export function formatDateTime(iso: string, locale: string): string {
     dateTimeFormats.set(locale, df);
   }
   return df.format(new Date(iso));
+}
+
+/** When saved data was fetched: the time alone for today (viewer's local day), otherwise date and time. */
+export function formatSavedAt(at: number, now: number, locale: string): string {
+  const day = (ms: number) => new Date(ms).toDateString();
+  if (day(at) !== day(now)) return formatDateTime(new Date(at).toISOString(), locale);
+  let tf = timeFormats.get(locale);
+  if (!tf) {
+    tf = new Intl.DateTimeFormat(locale, { timeStyle: 'short' });
+    timeFormats.set(locale, tf);
+  }
+  return tf.format(at);
 }
 
 export function currencyName(code: string, locale: string): string {

@@ -6,6 +6,7 @@ import { useCatalogContext } from './CatalogProvider';
 import { DEFAULT_FILTERS, selectGames } from './filters';
 import { FilterPanel } from './FilterPanel';
 import { GameGrid, GameGridSkeleton } from './GameGrid';
+import { NetworkBanner, RetryButton } from './NetworkBanner';
 import { providerOptions, tagOptions } from './labels';
 import { filtersEqual } from './urlState';
 import styles from './Catalog.module.css';
@@ -55,12 +56,16 @@ export function Catalog({ promos }: Props) {
     reset();
     headingRef.current?.focus();
   }, [reset]);
+  // A Retry removed by an automatic reload (`online`) hands focus to the heading, never to body.
+  const heading = useCallback(() => headingRef.current, []);
 
   return (
     <section className={styles.catalog} aria-labelledby={headingId}>
       <h1 id={headingId} ref={headingRef} tabIndex={-1} className={styles.heading}>
         {t('catalog.title')}
       </h1>
+
+      <NetworkBanner catalog={catalog} onRetry={retry} fallback={heading} />
 
       {promos}
 
@@ -90,9 +95,7 @@ export function Catalog({ promos }: Props) {
         <div role="alert" className={styles.state}>
           <h2 className={styles.stateTitle}>{t('catalog.error.title')}</h2>
           <p>{t(CATALOG_ERROR_KEYS[catalog.kind])}</p>
-          <button type="button" className={styles.action} onClick={onRetry}>
-            {t('catalog.retry')}
-          </button>
+          <RetryButton className={styles.action} onClick={onRetry} fallback={heading} />
         </div>
       )}
 
